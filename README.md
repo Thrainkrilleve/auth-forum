@@ -1,4 +1,4 @@
-﻿# Alliance Auth Forum
+# Alliance Auth Forum
 
 A full-featured forum plugin for [Alliance Auth](https://gitlab.com/allianceauth/allianceauth) (AA). Built for EVE Online alliances and corporations.
 
