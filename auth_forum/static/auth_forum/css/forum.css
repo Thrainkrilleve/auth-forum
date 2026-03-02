@@ -15,8 +15,8 @@
 :root {
     --forum-accent:          var(--bs-primary, #0d6efd);
     --forum-accent-rgb:      var(--bs-primary-rgb, 13, 110, 253);
-    --forum-surface:         var(--bs-body-bg, #fff);
-    --forum-surface-alt:     var(--bs-tertiary-bg, #f8f9fa);
+    --forum-surface:         var(--bs-body-bg, #222);
+    --forum-surface-alt:     var(--bs-secondary-bg, #2c3034);
     --forum-border:          var(--bs-border-color, #dee2e6);
     --forum-text:            var(--bs-body-color, #212529);
     --forum-text-muted:      var(--bs-secondary-color, #6c757d);
@@ -43,19 +43,47 @@
    3. Index — Category / Board Table
    ========================================================================= */
 
-.forum-index-accordion .accordion-button {
+/* Override Bootstrap accordion CSS variables so the dark theme is respected */
+.forum-index-accordion {
+    --bs-accordion-bg:                var(--bs-body-bg);
+    --bs-accordion-btn-bg:            var(--bs-body-bg);
+    --bs-accordion-active-bg:         var(--bs-body-bg);
+    --bs-accordion-color:             var(--bs-body-color);
+    --bs-accordion-btn-color:         var(--bs-body-color);
+    --bs-accordion-active-color:      var(--bs-primary);
+    --bs-accordion-border-color:      var(--bs-border-color);
+    --bs-accordion-btn-focus-box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+/* Make the accordion header a flex row so management buttons sit inline */
+.forum-index-accordion .accordion-header {
+    display: flex;
+    align-items: stretch;
+}
+
+.forum-index-accordion .accordion-header .accordion-button {
+    flex: 1;
+    width: auto;          /* override Bootstrap's width:100% */
+    min-width: 0;
     font-size: 1.1rem;
     font-weight: 600;
     letter-spacing: 0.02em;
-    color: var(--forum-text);
-    background-color: var(--forum-surface-alt);
 }
 
-.forum-index-accordion .accordion-button:not(.collapsed) {
-    color: var(--forum-accent);
-    border-bottom: 2px solid var(--forum-accent);
-    background-color: var(--forum-surface-alt);
+.forum-index-accordion .accordion-header .accordion-button:not(.collapsed) {
+    border-bottom: 2px solid var(--bs-primary);
     box-shadow: none;
+}
+
+/* Mod-button cluster sits flush in the header row */
+.forum-index-accordion .accordion-header .forum-cat-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0 0.5rem;
+    background-color: var(--bs-accordion-btn-bg);
+    border-left: 1px solid var(--bs-border-color);
+    flex-shrink: 0;
 }
 
 .forum-board-row {

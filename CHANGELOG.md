@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-03-01
+
+### Fixed
+- Accordion category headers now correctly inherit the dark theme background (overrode Bootstrap's `--bs-accordion-btn-bg` variable which was defaulting to white)
+- Management buttons (+, edit, delete) now sit inline inside the accordion header row instead of wrapping below it
+- Post card sidebar and reply form header no longer show a light grey strip on dark themes (fixed `--forum-surface-alt` fallback colour)
+
 ## [0.2.1] - 2026-03-01
 
 ### Changed
