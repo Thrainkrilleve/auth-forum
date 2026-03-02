@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-03-01
+
+### Changed
+- Expanded README permissions section with a full capability breakdown for `basic_access` and `manage_forum`
+
 ## [0.2.0] - 2026-03-01
 
 ### Added

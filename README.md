@@ -79,12 +79,54 @@ Restart your Alliance Auth services.
 
 ### Step 6  Configure Permissions
 
-Grant permissions in Alliance Auth admin (`/admin`):
+Grant permissions via the Alliance Auth admin panel (`/admin`) → **Auth** → **Groups** → assign to the relevant group(s).
 
-| Permission | Description |
+There are two permissions. Assign them based on the role breakdown below.
+
+---
+
+#### `auth_forum.basic_access`  Standard User / Member
+
+Grant this to every member who should be able to use the forum.
+
+| Capability | Details |
 |---|---|
-| `auth_forum.basic_access` | Access the forum  read threads and post replies |
-| `auth_forum.manage_forum` | Moderate the forum  lock/pin threads, delete any post |
+| View the forum index | Sees all visible categories and boards they have access to |
+| Read threads | Can open any thread in a board they have access to |
+| Create new threads | Can start a new thread in any board they have access to |
+| Reply to threads | Can post replies to open (unlocked) threads |
+| Edit own posts | Can edit their own posts at any time |
+| Delete own posts | Can delete their own posts |
+| Subscribe / unsubscribe | Receives AA bell notifications on new replies to threads they participate in |
+| Search | Can use the forum search |
+| Per-board access control | If a board is restricted to specific **groups** or **states**, the user must also be in one of those groups/states to see and enter that board |
+
+> **Tip:** A user without `basic_access` cannot see the forum at all — the menu item and all forum URLs are blocked.
+
+---
+
+#### `auth_forum.manage_forum`  Moderator / Forum Admin
+
+Grant this to officers, directors, or anyone who should be able to moderate and manage forum structure. This permission **includes everything** `basic_access` provides, plus:
+
+| Capability | Details |
+|---|---|
+| All `basic_access` actions | Everything listed above |
+| Lock / unlock threads | Prevents normal users from replying to a thread |
+| Pin / unpin threads | Keeps a thread at the top of the board thread list |
+| Edit any post | Can edit posts written by any user |
+| Delete any post | Can delete posts written by any user |
+| See hidden categories | Hidden categories (marked **is_hidden** in admin) are visible to moderators |
+| See hidden boards | Hidden boards are visible to moderators regardless of group/state restrictions |
+| Bypass board access control | Can access boards restricted to specific groups or states even if not a member of those groups/states |
+| Create categories | Can add new top-level categories directly from the forum index page |
+| Edit categories | Can rename/reorder/hide categories from the forum index page |
+| Delete categories | Can delete a category and all its boards/threads/posts |
+| Create boards | Can add new boards to any category from the forum index page |
+| Edit boards | Can change a board's name, description, order, visibility, and access restrictions |
+| Delete boards | Can delete a board and all its threads/posts |
+
+> **Tip:** `manage_forum` does **not** imply Django superuser or Django admin access. It only affects what the user can do inside the forum plugin itself.
 
 ## Updating
 
