@@ -1,6 +1,7 @@
 import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
+from django.utils.translation import gettext_lazy as _
 
 
 class Migration(migrations.Migration):
@@ -56,7 +57,7 @@ class Migration(migrations.Migration):
                 ("name", models.CharField(max_length=128, unique=True)),
                 ("description", models.TextField(blank=True, default="")),
                 ("order", models.PositiveIntegerField(db_index=True, default=0)),
-                ("is_hidden", models.BooleanField(default=False)),
+                ("is_hidden", models.BooleanField(default=False, help_text=_("Hidden categories are only visible to moderators."))),
             ],
             options={
                 "verbose_name": "Category",
@@ -91,11 +92,12 @@ class Migration(migrations.Migration):
                 ("description", models.TextField(blank=True, default="")),
                 ("slug", models.SlugField(blank=True, max_length=160, unique=True)),
                 ("order", models.PositiveIntegerField(db_index=True, default=0)),
-                ("is_hidden", models.BooleanField(default=False)),
+                ("is_hidden", models.BooleanField(default=False, help_text=_("Hidden boards are not shown on the index unless you have access."))),
                 (
                     "groups",
                     models.ManyToManyField(
                         blank=True,
+                        help_text=_("Restrict this board to members of these Alliance Auth groups. Leave empty to allow all users with basic_access."),
                         related_name="forum_boards",
                         to="auth.group",
                     ),
@@ -104,6 +106,7 @@ class Migration(migrations.Migration):
                     "states",
                     models.ManyToManyField(
                         blank=True,
+                        help_text=_("Restrict this board to users with these Alliance Auth states. Leave empty to allow all users with basic_access."),
                         related_name="forum_boards",
                         to="authentication.state",
                     ),
@@ -196,7 +199,7 @@ class Migration(migrations.Migration):
                 ("content", models.TextField()),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
-                ("is_first_post", models.BooleanField(default=False)),
+                ("is_first_post", models.BooleanField(default=False, help_text=_("The opening post of the thread. Deleting it deletes the thread."))),
             ],
             options={
                 "verbose_name": "Post",
