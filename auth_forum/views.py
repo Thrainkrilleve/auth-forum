@@ -26,6 +26,7 @@ from .helpers import (
     mark_thread_read,
     user_can_access_board,
 )
+from .forms import BoardForm, CategoryForm
 from .models import Board, Category, Post, Thread
 
 
@@ -98,7 +99,10 @@ def index(request):
         }
 
     # Build ordered category → boards structure
-    categories = Category.objects.filter(is_hidden=False).order_by("order", "name")
+    # Moderators see hidden categories too so they can manage them
+    is_mod = request.user.has_perm("auth_forum.manage_forum")
+    categories = Category.objects.all().order_by("order", "name") if is_mod \
+        else Category.objects.filter(is_hidden=False).order_by("order", "name")
     cat_data = []
     for cat in categories:
         cat_boards = [
@@ -444,3 +448,91 @@ def search(request):
         "min_length": AUTH_FORUM_SEARCH_MIN_LENGTH,
     }
     return render(request, "auth_forum/search.html", context)
+
+
+# ---------------------------------------------------------------------------
+# Category management (manage_forum only)
+# ---------------------------------------------------------------------------
+
+
+@login_required
+@permission_required("auth_forum.manage_forum")
+def create_category(request):
+    """Create a new category."""
+    form = CategoryForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, _("Category created."))
+        return redirect("auth_forum:index")
+    return render(request, "auth_forum/manage_category.html", {"form": form, "title": _("New Category")})
+
+
+@login_required
+@permission_required("auth_forum.manage_forum")
+def edit_category(request, category_pk):
+    """Edit an existing category."""
+    category = get_object_or_404(Category, pk=category_pk)
+    form = CategoryForm(request.POST or None, instance=category)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, _("Category updated."))
+        return redirect("auth_forum:index")
+    return render(request, "auth_forum/manage_category.html", {"form": form, "title": _("Edit Category"), "category": category})
+
+
+@login_required
+@permission_required("auth_forum.manage_forum")
+def delete_category(request, category_pk):
+    """Delete a category and all its boards/threads/posts."""
+    category = get_object_or_404(Category, pk=category_pk)
+    if request.method == "POST":
+        category.delete()
+        messages.success(request, _("Category deleted."))
+        return redirect("auth_forum:index")
+    return render(request, "auth_forum/delete_category_confirm.html", {"category": category})
+
+
+# ---------------------------------------------------------------------------
+# Board management (manage_forum only)
+# ---------------------------------------------------------------------------
+
+
+@login_required
+@permission_required("auth_forum.manage_forum")
+def create_board(request, category_pk=None):
+    """Create a new board, optionally pre-filling the category."""
+    initial = {}
+    if category_pk:
+        category = get_object_or_404(Category, pk=category_pk)
+        initial["category"] = category
+    form = BoardForm(request.POST or None, initial=initial)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, _("Board created."))
+        return redirect("auth_forum:index")
+    return render(request, "auth_forum/manage_board.html", {"form": form, "title": _("New Board")})
+
+
+@login_required
+@permission_required("auth_forum.manage_forum")
+def edit_board(request, board_slug):
+    """Edit an existing board."""
+    the_board = get_object_or_404(Board, slug=board_slug)
+    form = BoardForm(request.POST or None, instance=the_board)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, _("Board updated."))
+        return redirect("auth_forum:board", board_slug=the_board.slug)
+    return render(request, "auth_forum/manage_board.html", {"form": form, "title": _("Edit Board"), "board": the_board})
+
+
+@login_required
+@permission_required("auth_forum.manage_forum")
+def delete_board(request, board_slug):
+    """Delete a board and all its threads/posts."""
+    the_board = get_object_or_404(Board, slug=board_slug)
+    if request.method == "POST":
+        the_board.delete()
+        messages.success(request, _("Board deleted."))
+        return redirect("auth_forum:index")
+    return render(request, "auth_forum/delete_board_confirm.html", {"board": the_board})

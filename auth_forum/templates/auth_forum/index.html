@@ -14,9 +14,19 @@
         <span class="forum-unread-badge">{{ total_unread }}</span>
         {% endif %}
     </h1>
-    <a href="{% url 'auth_forum:search' %}" class="btn btn-outline-secondary btn-sm">
-        <i class="fas fa-search fa-fw"></i> {% translate "Search" %}
-    </a>
+    <div class="d-flex gap-2">
+        {% if perms.auth_forum.manage_forum %}
+        <a href="{% url 'auth_forum:create_category' %}" class="btn btn-success btn-sm">
+            <i class="fas fa-folder-plus fa-fw"></i> {% translate "New Category" %}
+        </a>
+        <a href="{% url 'auth_forum:create_board' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus fa-fw"></i> {% translate "New Board" %}
+        </a>
+        {% endif %}
+        <a href="{% url 'auth_forum:search' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-search fa-fw"></i> {% translate "Search" %}
+        </a>
+    </div>
 </div>
 
 {# ---- Category accordion ---- #}
@@ -39,6 +49,22 @@
                 <small class="text-muted ms-2 fw-normal">{{ cat.description }}</small>
                 {% endif %}
             </button>
+            {% if perms.auth_forum.manage_forum %}
+            <div class="d-flex gap-1 pe-2">
+                <a href="{% url 'auth_forum:create_board_in_category' cat.pk %}"
+                   class="btn btn-outline-primary btn-sm" title="{% translate 'Add Board' %}">
+                    <i class="fas fa-plus fa-fw"></i>
+                </a>
+                <a href="{% url 'auth_forum:edit_category' cat.pk %}"
+                   class="btn btn-outline-secondary btn-sm" title="{% translate 'Edit Category' %}">
+                    <i class="fas fa-pen fa-fw"></i>
+                </a>
+                <a href="{% url 'auth_forum:delete_category' cat.pk %}"
+                   class="btn btn-outline-danger btn-sm" title="{% translate 'Delete Category' %}">
+                    <i class="fas fa-trash fa-fw"></i>
+                </a>
+            </div>
+            {% endif %}
         </h2>
 
         <div id="collapse-cat-{{ cat.pk }}"
@@ -72,6 +98,14 @@
                             </a>
                             {% if meta.unread_count %}
                             <span class="forum-unread-badge">{{ meta.unread_count }}</span>
+                            {% endif %}
+                            {% if perms.auth_forum.manage_forum %}
+                            <span class="ms-auto d-flex gap-1">
+                                <a href="{% url 'auth_forum:edit_board' b.slug %}"
+                                   class="btn btn-outline-secondary btn-sm py-0 px-1" title="{% translate 'Edit Board' %}">
+                                    <i class="fas fa-pen fa-fw"></i>
+                                </a>
+                            </span>
                             {% endif %}
                         </div>
                         {% if b.description %}
@@ -131,6 +165,14 @@
     <div class="card-body text-center text-muted py-5">
         <i class="fas fa-comments fa-3x mb-3 d-block"></i>
         <p>{% translate "No boards available yet. Check back later or contact an administrator." %}</p>
+        {% if perms.auth_forum.manage_forum %}
+        <a href="{% url 'auth_forum:create_category' %}" class="btn btn-success me-2">
+            <i class="fas fa-folder-plus fa-fw"></i> {% translate "Create First Category" %}
+        </a>
+        <a href="{% url 'auth_forum:create_board' %}" class="btn btn-primary">
+            <i class="fas fa-plus fa-fw"></i> {% translate "Create First Board" %}
+        </a>
+        {% endif %}
     </div>
 </div>
 {% endif %}
