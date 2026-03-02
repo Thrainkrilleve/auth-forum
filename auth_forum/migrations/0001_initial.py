@@ -238,15 +238,9 @@ class Migration(migrations.Migration):
                 ("last_read", models.DateTimeField(auto_now=True)),
             ],
             options={
+                "unique_together": {("user", "thread")},
                 "verbose_name": "User Read Status",
                 "verbose_name_plural": "User Read Statuses",
             },
-        ),
-        migrations.AddConstraint(
-            model_name="userreadstatus",
-            constraint=models.UniqueConstraint(
-                fields=("user", "thread"),
-                name="unique_user_thread_read",
-            ),
         ),
     ]
