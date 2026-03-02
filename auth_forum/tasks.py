@@ -2,13 +2,18 @@
 Celery tasks for auth_forum.
 
 - notify_subscribers_task: fires Alliance Auth bell notifications to thread subscribers.
+- notify_reaction_task: fires AA bell notification to post author when someone reacts.
 - discord_post_notification_task: optionally sends a Discord embed (requires aadiscordbot).
 """
 
 from celery import shared_task
 from allianceauth.services.hooks import get_extension_logger
 
-from .app_settings import AUTH_FORUM_NOTIFY_REPLIES, AUTH_FORUM_DISCORD_CHANNEL_ID
+from .app_settings import (
+    AUTH_FORUM_NOTIFY_REPLIES,
+    AUTH_FORUM_NOTIFY_REACTIONS,
+    AUTH_FORUM_DISCORD_CHANNEL_ID,
+)
 from .helpers import discord_bot_active
 
 logger = get_extension_logger(__name__)
@@ -56,6 +61,53 @@ def notify_subscribers_task(self, thread_pk: int, post_pk: int, actor_pk: int):
 
     except Exception as exc:
         logger.exception("notify_subscribers_task failed for post_pk=%d", post_pk)
+        raise self.retry(exc=exc)
+
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def notify_reaction_task(self, post_pk: int, actor_pk: int, emoji: str):
+    """
+    Send an Alliance Auth bell notification to the post author when someone
+    reacts to their post.
+    """
+    if not AUTH_FORUM_NOTIFY_REACTIONS:
+        return
+
+    EMOJI_DISPLAY = {
+        "thumbsup": "\U0001f44d",
+        "o7": "o7",
+        "laugh": "\U0001f602",
+        "wow": "\U0001f62e",
+        "fire": "\U0001f525",
+    }
+
+    try:
+        from django.contrib.auth.models import User
+        from allianceauth.notifications import notify
+
+        from .models import Post
+
+        post = Post.objects.select_related("thread", "author").get(pk=post_pk)
+        actor = User.objects.get(pk=actor_pk)
+        display = EMOJI_DISPLAY.get(emoji, emoji)
+
+        if post.author:
+            notify(
+                user=post.author,
+                title=f"{actor.username} reacted to your post",
+                message=(
+                    f"{actor.username} reacted {display} to your post "
+                    f'in "{post.thread.title}".'
+                ),
+                level="info",
+            )
+
+        logger.debug(
+            "Sent reaction notification for post_pk=%d, emoji=%s", post_pk, emoji
+        )
+
+    except Exception as exc:
+        logger.exception("notify_reaction_task failed for post_pk=%d", post_pk)
         raise self.retry(exc=exc)
 
 

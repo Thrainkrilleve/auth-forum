@@ -716,3 +716,100 @@ mark {
         display: none;
     }
 }
+
+/* ===========================================================================
+   Reaction Bar
+   =========================================================================== */
+
+.forum-reaction-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0.5rem 0 0.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 0.75rem;
+}
+
+.forum-reaction-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    padding: 0.15rem 0.6rem;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    color: var(--forum-text);
+    line-height: 1.4;
+}
+
+.forum-reaction-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: scale(1.06);
+}
+
+.forum-reaction-btn--active {
+    background: rgba(var(--bs-primary-rgb), 0.25);
+    border-color: var(--bs-primary);
+    color: #fff;
+}
+
+.forum-reaction-count {
+    font-size: 0.78rem;
+    font-weight: 600;
+    opacity: 0.85;
+    margin-left: 0.15rem;
+}
+
+/* ===========================================================================
+   Poll Widget
+   =========================================================================== */
+
+.forum-poll {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--forum-radius);
+    overflow: hidden;
+}
+
+.forum-poll-header {
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 0.95rem;
+}
+
+.forum-poll-meta {
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.forum-poll-option {
+    margin-bottom: 0.75rem;
+}
+
+.forum-poll-option--voted .form-check-label,
+.forum-poll-option--voted > div:first-child {
+    font-weight: 600;
+}
+
+.forum-poll-bar-outer {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    height: 8px;
+    overflow: hidden;
+}
+
+.forum-poll-bar-inner {
+    height: 100%;
+    background: var(--bs-primary);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+    min-width: 0;
+}
+
+.forum-poll-pct {
+    font-size: 0.8rem;
+    opacity: 0.75;
+    white-space: nowrap;
+}

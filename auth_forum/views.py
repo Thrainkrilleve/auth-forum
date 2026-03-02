@@ -11,7 +11,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
 from django.db import transaction
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.utils.translation import gettext_lazy as _
 
@@ -27,7 +29,7 @@ from .helpers import (
     user_can_access_board,
 )
 from .forms import BoardForm, CategoryForm
-from .models import Board, Category, Post, Thread
+from .models import Board, Category, Post, Thread, PostReaction, ThreadSubscription, Poll, PollOption, PollVote
 
 
 # ---------------------------------------------------------------------------
@@ -210,18 +212,51 @@ def thread(request, thread_pk):
     # GET — list posts, mark as read
     posts_qs = (
         the_thread.posts.select_related("author__profile__main_character")
+        .prefetch_related("reactions")
         .order_by("created_at")
     )
     paginator = Paginator(posts_qs, AUTH_FORUM_POSTS_PER_PAGE)
     page_number = request.GET.get("page", 1)
     page_obj = paginator.get_page(page_number)
 
-    # Augment each post with character metadata for the sidebar
+    # Augment each post with character metadata and reaction data
     for p in page_obj:
         p.char_ctx = _char_context(p.author) if p.author else {}
         p.post_total = _get_user_post_count(p.author) if p.author else 0
+        # Reactions: count per emoji and which ones the current user gave
+        p.reaction_counts = {}
+        p.user_reactions = set()
+        for r in p.reactions.all():
+            p.reaction_counts[r.emoji] = p.reaction_counts.get(r.emoji, 0) + 1
+            if r.user_id == request.user.pk:
+                p.user_reactions.add(r.emoji)
 
     mark_thread_read(request.user, the_thread)
+
+    # Subscription status
+    is_subscribed = ThreadSubscription.objects.filter(
+        user=request.user, thread=the_thread
+    ).exists()
+
+    # Poll (only show on first page)
+    poll = None
+    poll_options = []
+    poll_total = 0
+    user_voted_ids = set()
+    if page_number in (1, "1", None):
+        try:
+            poll = the_thread.poll
+            poll_options = list(
+                poll.options.annotate(vote_count_ann=Count("votes")).order_by("order", "pk")
+            )
+            poll_total = poll.total_voters
+            user_voted_ids = set(
+                PollVote.objects.filter(
+                    option__poll=poll, user=request.user
+                ).values_list("option_id", flat=True)
+            )
+        except Poll.DoesNotExist:
+            pass
 
     context = {
         "thread": the_thread,
@@ -230,6 +265,12 @@ def thread(request, thread_pk):
         "can_moderate": request.user.has_perm("auth_forum.manage_forum"),
         "can_reply": not the_thread.is_locked
         or request.user.has_perm("auth_forum.manage_forum"),
+        "is_subscribed": is_subscribed,
+        "poll": poll,
+        "poll_options": poll_options,
+        "poll_total": poll_total,
+        "user_voted_ids": user_voted_ids,
+        "reaction_choices": PostReaction.REACTION_CHOICES,
     }
     return render(request, "auth_forum/thread.html", context)
 
@@ -283,6 +324,27 @@ def new_thread(request, board_slug):
                 content=content,
                 is_first_post=True,
             )
+
+        # Auto-subscribe the thread author
+        ThreadSubscription.objects.get_or_create(user=request.user, thread=new_t)
+
+        # Optional poll creation
+        poll_question = request.POST.get("poll_question", "").strip()
+        poll_options_raw = request.POST.getlist("poll_options")
+        poll_options_clean = [o.strip() for o in poll_options_raw if o.strip()]
+        if poll_question and len(poll_options_clean) >= 2:
+            from django.utils.dateparse import parse_datetime
+            closes_at_str = request.POST.get("poll_closes_at", "").strip()
+            closes_at = parse_datetime(closes_at_str) if closes_at_str else None
+            allow_multiple = request.POST.get("poll_allow_multiple") == "on"
+            poll_obj = Poll.objects.create(
+                thread=new_t,
+                question=poll_question,
+                allow_multiple=allow_multiple,
+                closes_at=closes_at,
+            )
+            for i, opt_text in enumerate(poll_options_clean[:10]):
+                PollOption.objects.create(poll=poll_obj, text=opt_text, order=i)
 
         from .tasks import discord_post_notification_task
 
@@ -536,3 +598,107 @@ def delete_board(request, board_slug):
         messages.success(request, _("Board deleted."))
         return redirect("auth_forum:index")
     return render(request, "auth_forum/delete_board_confirm.html", {"board": the_board})
+
+
+# ---------------------------------------------------------------------------
+# Toggle reaction on a post
+# ---------------------------------------------------------------------------
+
+
+@login_required
+@permission_required("auth_forum.basic_access")
+@require_POST
+def toggle_reaction(request, post_pk):
+    """Add or remove an emoji reaction on a post."""
+    post = get_object_or_404(Post.objects.select_related("thread__board", "author"), pk=post_pk)
+
+    if not user_can_access_board(request.user, post.thread.board):
+        return redirect("auth_forum:index")
+
+    emoji = request.POST.get("emoji", "")
+    valid_emojis = [k for k, _ in PostReaction.REACTION_CHOICES]
+    if emoji not in valid_emojis:
+        return redirect("auth_forum:thread", thread_pk=post.thread.pk)
+
+    reaction, created = PostReaction.objects.get_or_create(
+        post=post, user=request.user, emoji=emoji
+    )
+    if not created:
+        reaction.delete()
+    elif post.author and post.author != request.user:
+        from .tasks import notify_reaction_task
+        notify_reaction_task.delay(post.pk, request.user.pk, emoji)
+
+    # Redirect back to the correct page, anchored to the post
+    page = request.POST.get("page", "")
+    url = reverse("auth_forum:thread", kwargs={"thread_pk": post.thread.pk})
+    if page:
+        url += f"?page={page}"
+    url += f"#post-{post.pk}"
+    return redirect(url)
+
+
+# ---------------------------------------------------------------------------
+# Toggle thread subscription
+# ---------------------------------------------------------------------------
+
+
+@login_required
+@permission_required("auth_forum.basic_access")
+@require_POST
+def toggle_subscription(request, thread_pk):
+    """Subscribe to or unsubscribe from a thread."""
+    the_thread = get_object_or_404(Thread.objects.select_related("board"), pk=thread_pk)
+
+    if not user_can_access_board(request.user, the_thread.board):
+        return redirect("auth_forum:index")
+
+    sub, created = ThreadSubscription.objects.get_or_create(
+        user=request.user, thread=the_thread
+    )
+    if not created:
+        sub.delete()
+        messages.info(request, _("Unsubscribed from thread."))
+    else:
+        messages.success(request, _("Subscribed — you'll be notified of new replies."))
+
+    return redirect("auth_forum:thread", thread_pk=the_thread.pk)
+
+
+# ---------------------------------------------------------------------------
+# Vote on a poll
+# ---------------------------------------------------------------------------
+
+
+@login_required
+@permission_required("auth_forum.basic_access")
+@require_POST
+def vote_poll(request, poll_pk):
+    """Record or update a user's vote on a poll."""
+    poll = get_object_or_404(Poll.objects.select_related("thread__board"), pk=poll_pk)
+
+    if not user_can_access_board(request.user, poll.thread.board):
+        return redirect("auth_forum:index")
+
+    if poll.is_closed():
+        messages.error(request, _("This poll is closed."))
+        return redirect("auth_forum:thread", thread_pk=poll.thread.pk)
+
+    option_ids = request.POST.getlist("option")
+    if not option_ids:
+        messages.error(request, _("Please select at least one option."))
+        return redirect("auth_forum:thread", thread_pk=poll.thread.pk)
+
+    if not poll.allow_multiple:
+        option_ids = option_ids[:1]
+
+    with transaction.atomic():
+        # Remove any existing votes for this user on this poll
+        PollVote.objects.filter(option__poll=poll, user=request.user).delete()
+        # Record new votes
+        options = PollOption.objects.filter(poll=poll, pk__in=option_ids)
+        for opt in options:
+            PollVote.objects.create(option=opt, user=request.user)
+
+    messages.success(request, _("Vote recorded."))
+    return redirect("auth_forum:thread", thread_pk=poll.thread.pk)

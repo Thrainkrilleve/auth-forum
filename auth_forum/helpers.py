@@ -127,21 +127,33 @@ def mark_thread_read(user, thread: Thread) -> None:
 
 def get_thread_subscribers(thread: Thread, exclude_user=None) -> QuerySet:
     """
-    Return queryset of Users who have posted in *thread* — these are the
-    users to notify on a new reply.
+    Return queryset of Users to notify on a new post.
+
+    Uses explicit ThreadSubscription records.  Falls back to posters + author
+    for threads that pre-date the subscription model (backward compat).
     """
-    qs = (
-        User.objects.filter(forum_posts__thread=thread)
-        .distinct()
-        .exclude(pk=thread.author_id if thread.author_id else 0)
+    from .models import ThreadSubscription
+
+    subscriber_ids = set(
+        ThreadSubscription.objects.filter(thread=thread).values_list("user_id", flat=True)
     )
+
+    # Backward-compat: if nobody has explicitly subscribed yet, fall back to
+    # everyone who has posted in the thread + the thread author.
+    if not subscriber_ids:
+        poster_ids = set(
+            Post.objects.filter(thread=thread)
+            .exclude(author__isnull=True)
+            .values_list("author_id", flat=True)
+        )
+        if thread.author_id:
+            poster_ids.add(thread.author_id)
+        subscriber_ids = poster_ids
+
     if exclude_user:
-        qs = qs.exclude(pk=exclude_user.pk)
-    # Also include the thread author
-    author_qs = User.objects.filter(pk=thread.author_id) if thread.author_id else User.objects.none()
-    if exclude_user and thread.author_id == exclude_user.pk:
-        author_qs = User.objects.none()
-    return (qs | author_qs).distinct()
+        subscriber_ids.discard(exclude_user.pk)
+
+    return User.objects.filter(pk__in=subscriber_ids)
 
 
 # ---------------------------------------------------------------------------

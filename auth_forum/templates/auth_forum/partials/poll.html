@@ -1,0 +1,98 @@
+{% load i18n %}
+{#
+  Requires context:
+    poll             — Poll model instance
+    poll_options     — queryset / list of PollOption (each with .vote_count annotation)
+    user_vote_option_ids — set of option PKs the current user voted for
+#}
+<div class="forum-poll card mb-4">
+    <div class="forum-poll-header card-header d-flex align-items-center justify-content-between">
+        <span>
+            <i class="fas fa-poll fa-fw me-1"></i>
+            <strong>{% translate "Poll" %}</strong> — {{ poll.question }}
+        </span>
+        <span class="forum-poll-meta">
+            {% if poll.is_closed %}
+            <span class="badge bg-secondary"><i class="fas fa-lock fa-fw"></i> {% translate "Closed" %}</span>
+            {% endif %}
+            {{ poll.total_voters }} {% translate "voter(s)" %}
+        </span>
+    </div>
+    <div class="card-body">
+
+    {% if user_vote_option_ids or poll.is_closed %}
+        {# ---- Results view ---- #}
+        {% for opt in poll_options %}
+        {% with pct=opt.vote_count|floatformat:0 total=poll.total_voters %}
+        <div class="forum-poll-option{% if opt.pk in user_vote_option_ids %} forum-poll-option--voted{% endif %}">
+            <div class="d-flex justify-content-between mb-1">
+                <span>
+                    {% if opt.pk in user_vote_option_ids %}
+                    <i class="fas fa-check-circle fa-fw text-success me-1"></i>
+                    {% endif %}
+                    {{ opt.text }}
+                </span>
+                <span class="forum-poll-pct">
+                    {% if total %}
+                    {% widthratio opt.vote_count total 100 %}%
+                    ({{ opt.vote_count }})
+                    {% else %}
+                    0%
+                    {% endif %}
+                </span>
+            </div>
+            <div class="forum-poll-bar-outer">
+                <div class="forum-poll-bar-inner"
+                     style="width: {% if total %}{% widthratio opt.vote_count total 100 %}{% else %}0{% endif %}%">
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+
+        {% if not poll.is_closed %}
+        <form method="post" action="{% url 'auth_forum:vote_poll' poll.pk %}" class="mt-3">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-undo fa-fw"></i> {% translate "Change vote" %}
+            </button>
+        </form>
+        {% endif %}
+
+    {% else %}
+        {# ---- Voting form ---- #}
+        <form method="post" action="{% url 'auth_forum:vote_poll' poll.pk %}">
+            {% csrf_token %}
+            {% for opt in poll_options %}
+            <div class="form-check forum-poll-option">
+                {% if poll.allow_multiple %}
+                <input class="form-check-input" type="checkbox"
+                       name="option" value="{{ opt.pk }}"
+                       id="poll-opt-{{ opt.pk }}">
+                {% else %}
+                <input class="form-check-input" type="radio"
+                       name="option" value="{{ opt.pk }}"
+                       id="poll-opt-{{ opt.pk }}">
+                {% endif %}
+                <label class="form-check-label" for="poll-opt-{{ opt.pk }}">{{ opt.text }}</label>
+            </div>
+            {% endfor %}
+
+            {% if poll.allow_multiple %}
+            <small class="text-muted d-block mb-2"><i class="fas fa-info-circle fa-fw"></i> {% translate "Multiple choices allowed." %}</small>
+            {% endif %}
+            {% if poll.closes_at %}
+            <small class="text-muted d-block mb-2">
+                <i class="fas fa-clock fa-fw"></i>
+                {% translate "Closes" %}: {{ poll.closes_at|date:"N j, Y H:i" }} UTC
+            </small>
+            {% endif %}
+
+            <button type="submit" class="btn btn-primary btn-sm mt-2">
+                <i class="fas fa-vote-yea fa-fw"></i> {% translate "Submit Vote" %}
+            </button>
+        </form>
+    {% endif %}
+
+    </div>
+</div>

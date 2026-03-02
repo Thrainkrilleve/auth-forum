@@ -1,5 +1,5 @@
 {% extends 'auth_forum/base.html' %}
-{% load i18n static %}
+{% load i18n static forum_tags %}
 
 {% block forum_page_title %}{{ thread.title }}{% endblock %}
 
@@ -30,6 +30,15 @@
         {{ thread.title }}
     </h1>
     <div class="d-flex align-items-center gap-2">
+        <form method="post" action="{% url 'auth_forum:toggle_subscription' thread.pk %}">
+            {% csrf_token %}
+            <button type="submit"
+                    class="btn btn-sm {% if user_subscribed %}btn-success{% else %}btn-outline-secondary{% endif %}"
+                    title="{% if user_subscribed %}{% translate 'Unsubscribe from notifications' %}{% else %}{% translate 'Subscribe for reply notifications' %}{% endif %}">
+                <i class="fas {% if user_subscribed %}fa-bell{% else %}fa-bell-slash{% endif %} fa-fw"></i>
+                {% if user_subscribed %}{% translate "Subscribed" %}{% else %}{% translate "Subscribe" %}{% endif %}
+            </button>
+        </form>
         <a href="{% url 'auth_forum:search' %}" class="btn btn-outline-secondary btn-sm">
             <i class="fas fa-search fa-fw"></i>
         </a>
@@ -60,6 +69,11 @@
         </button>
     </form>
 </div>
+{% endif %}
+
+{# ---- Poll (page 1 only) ---- #}
+{% if poll and page_obj.number == 1 %}
+{% include 'auth_forum/partials/poll.html' with poll=poll poll_options=poll_options user_vote_option_ids=user_vote_option_ids %}
 {% endif %}
 
 {# ---- Post list ---- #}

@@ -79,5 +79,23 @@
         </div>
 
         <div class="forum-post-content">{{ post.content|forum_render }}</div>
+
+        {# ---- Reaction bar ---- #}
+        <div class="forum-reaction-bar">
+            {% for emoji_key, emoji_label in reaction_choices %}
+            {% with count=post.reaction_counts|dict_get:emoji_key %}
+            <form method="post" action="{% url 'auth_forum:toggle_reaction' post.pk %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="emoji" value="{{ emoji_key }}">
+                <input type="hidden" name="page" value="{{ page_obj.number }}">
+                <button type="submit"
+                        class="forum-reaction-btn{% if emoji_key in post.user_reactions %} forum-reaction-btn--active{% endif %}"
+                        title="{{ emoji_label }}">
+                    {{ emoji_label }}{% if count %}<span class="forum-reaction-count">{{ count }}</span>{% endif %}
+                </button>
+            </form>
+            {% endwith %}
+            {% endfor %}
+        </div>
     </div>
 </div>

@@ -23,4 +23,8 @@ urlpatterns = [
     path("manage/board/new/<int:category_pk>/", views.create_board, name="create_board_in_category"),
     path("manage/board/<slug:board_slug>/edit/", views.edit_board, name="edit_board"),
     path("manage/board/<slug:board_slug>/delete/", views.delete_board, name="delete_board"),
+    # Reactions, subscriptions, polls
+    path("post/<int:post_pk>/react/", views.toggle_reaction, name="toggle_reaction"),
+    path("thread/<int:thread_pk>/subscribe/", views.toggle_subscription, name="toggle_subscription"),
+    path("poll/<int:poll_pk>/vote/", views.vote_poll, name="vote_poll"),
 ]

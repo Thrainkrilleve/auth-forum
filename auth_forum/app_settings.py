@@ -12,5 +12,8 @@ AUTH_FORUM_SEARCH_MIN_LENGTH = getattr(settings, "AUTH_FORUM_SEARCH_MIN_LENGTH",
 # Send Alliance Auth bell notifications when someone replies to a thread you posted in
 AUTH_FORUM_NOTIFY_REPLIES = getattr(settings, "AUTH_FORUM_NOTIFY_REPLIES", True)
 
+# Send Alliance Auth bell notifications when someone reacts to your post
+AUTH_FORUM_NOTIFY_REACTIONS = getattr(settings, "AUTH_FORUM_NOTIFY_REACTIONS", True)
+
 # Optional: Discord channel ID to post new thread announcements to (requires aadiscordbot)
 AUTH_FORUM_DISCORD_CHANNEL_ID = getattr(settings, "AUTH_FORUM_DISCORD_CHANNEL_ID", None)

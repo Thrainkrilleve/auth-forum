@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-03-02
+
+### Added
+- **Post Reactions** — 5 emoji reactions (👍 o7 😂 😮 🔥) on every post via inline mini-forms; reaction counts shown on buttons; active reaction highlighted; AA bell notification sent to post author on first reaction
+- **Thread Subscriptions** — subscribe/unsubscribe button on thread pages; new replies send AA bell notifications to all subscribers; new thread author and repliers auto-subscribed on post
+- **Polls** — optional poll when creating a new thread (question + up to 10 options, multi-choice toggle, optional close date); live vote tallies shown as percentage progress bars after voting; results locked after poll closes
+- **Markdown rendering** via `mistune>=3.0.0` — full Markdown now rendered in posts (headers, lists, ordered lists, blockquotes, code fences, tables, strikethrough); falls back gracefully to regex renderer if mistune is not installed
+- New `dict_get` template filter for accessing reaction count dicts from templates
+- `AUTH_FORUM_NOTIFY_REACTIONS` setting (default `True`) to toggle reaction notifications
+- New models: `PostReaction`, `ThreadSubscription`, `Poll`, `PollOption`, `PollVote`
+- Migration `0003_reactions_polls_subscriptions` creates all new models
+
+### Changed
+- `forum_render` template filter now delegates to mistune for Markdown; `[img]` and `[quote]` custom blocks extracted before Markdown processing and restored after
+- `get_thread_subscribers` helper now uses `ThreadSubscription` model as canonical source with backward-compatible fallback
+- `mistune>=3.0.0` added as a runtime dependency
+
 ## [0.2.5] - 2026-03-01
 
 ### Added

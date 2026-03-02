@@ -1,3 +1,3 @@
-__version__ = "0.2.5"
+__version__ = "0.3.0"
 
 default_app_config = "auth_forum.apps.AuthForumConfig"

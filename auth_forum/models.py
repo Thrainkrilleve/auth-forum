@@ -195,3 +195,116 @@ class UserReadStatus(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user.username} read '{self.thread.title}'"
+
+
+class PostReaction(models.Model):
+    """An emoji reaction to a post."""
+
+    THUMBSUP = "thumbsup"
+    O7 = "o7"
+    LAUGH = "laugh"
+    WOW = "wow"
+    FIRE = "fire"
+
+    REACTION_CHOICES = [
+        (THUMBSUP, "👍"),
+        (O7,       "o7"),
+        (LAUGH,    "😂"),
+        (WOW,      "😮"),
+        (FIRE,     "🔥"),
+    ]
+
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="reactions")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="forum_reactions")
+    emoji = models.CharField(max_length=20, choices=REACTION_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["post", "user", "emoji"], name="unique_post_user_emoji"
+            )
+        ]
+        verbose_name = "Post Reaction"
+        verbose_name_plural = "Post Reactions"
+
+    def __str__(self) -> str:
+        return f"{self.user.username} reacted {self.emoji} to post #{self.post_id}"
+
+
+class ThreadSubscription(models.Model):
+    """Explicit subscription to a thread — user will receive AA bell notifications on new replies."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="forum_subscriptions")
+    thread = models.ForeignKey(Thread, on_delete=models.CASCADE, related_name="subscriptions")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "thread")
+        verbose_name = "Thread Subscription"
+        verbose_name_plural = "Thread Subscriptions"
+
+    def __str__(self) -> str:
+        return f"{self.user.username} subscribed to '{self.thread.title}'"
+
+
+class Poll(models.Model):
+    """A poll attached to a thread (one per thread)."""
+
+    thread = models.OneToOneField(Thread, on_delete=models.CASCADE, related_name="poll")
+    question = models.CharField(max_length=255)
+    allow_multiple = models.BooleanField(
+        default=False,
+        help_text=_("Allow users to select more than one option."),
+    )
+    closes_at = models.DateTimeField(
+        null=True, blank=True, help_text=_("Leave blank for no expiry.")
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Poll"
+        verbose_name_plural = "Polls"
+
+    def __str__(self) -> str:
+        return f"Poll: {self.question}"
+
+    def is_closed(self) -> bool:
+        from django.utils import timezone
+        return self.closes_at is not None and timezone.now() > self.closes_at
+
+    @property
+    def total_voters(self) -> int:
+        """Distinct number of users who have voted in this poll."""
+        return PollVote.objects.filter(option__poll=self).values("user").distinct().count()
+
+
+class PollOption(models.Model):
+    """One answer option in a poll."""
+
+    poll = models.ForeignKey(Poll, on_delete=models.CASCADE, related_name="options")
+    text = models.CharField(max_length=200)
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "pk"]
+        verbose_name = "Poll Option"
+        verbose_name_plural = "Poll Options"
+
+    def __str__(self) -> str:
+        return self.text
+
+
+class PollVote(models.Model):
+    """A single vote by a user on a poll option."""
+
+    option = models.ForeignKey(PollOption, on_delete=models.CASCADE, related_name="votes")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="forum_poll_votes")
+    voted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Poll Vote"
+        verbose_name_plural = "Poll Votes"
+
+    def __str__(self) -> str:
+        return f"{self.user.username} voted '{self.option.text}'"

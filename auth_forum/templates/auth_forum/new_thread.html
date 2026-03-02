@@ -88,6 +88,68 @@
                 <div class="forum-char-counter">10000 {% translate "characters remaining" %}</div>
             </div>
 
+            {# ---- Optional Poll section ---- #}
+            <div class="accordion mb-3" id="pollAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="pollHeading">
+                        <button class="accordion-button collapsed" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#pollCollapse"
+                                aria-expanded="false" aria-controls="pollCollapse">
+                            <i class="fas fa-poll fa-fw me-2"></i>
+                            {% translate "Add a Poll (optional)" %}
+                        </button>
+                    </h2>
+                    <div id="pollCollapse" class="accordion-collapse collapse" aria-labelledby="pollHeading" data-bs-parent="#pollAccordion">
+                        <div class="accordion-body">
+
+                            <div class="mb-3">
+                                <label for="id_poll_question" class="form-label fw-semibold">
+                                    {% translate "Poll Question" %}
+                                </label>
+                                <input type="text"
+                                       id="id_poll_question"
+                                       name="poll_question"
+                                       class="form-control"
+                                       placeholder="{% translate 'e.g. What do you think?' %}"
+                                       maxlength="255">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">{% translate "Options" %}</label>
+                                <div id="pollOptionsContainer">
+                                    <div class="input-group mb-2 poll-option-row">
+                                        <span class="input-group-text">#1</span>
+                                        <input type="text" name="poll_options" class="form-control" placeholder="{% translate 'Option text…' %}" maxlength="200">
+                                        <button type="button" class="btn btn-outline-danger poll-remove-option" title="{% translate 'Remove' %}"><i class="fas fa-times"></i></button>
+                                    </div>
+                                    <div class="input-group mb-2 poll-option-row">
+                                        <span class="input-group-text">#2</span>
+                                        <input type="text" name="poll_options" class="form-control" placeholder="{% translate 'Option text…' %}" maxlength="200">
+                                        <button type="button" class="btn btn-outline-danger poll-remove-option" title="{% translate 'Remove' %}"><i class="fas fa-times"></i></button>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="addPollOption">
+                                    <i class="fas fa-plus fa-fw"></i> {% translate "Add option" %}
+                                </button>
+                            </div>
+
+                            <div class="mb-2 form-check">
+                                <input type="checkbox" class="form-check-input" id="id_poll_allow_multiple" name="poll_allow_multiple" value="1">
+                                <label class="form-check-label" for="id_poll_allow_multiple">
+                                    {% translate "Allow multiple choices" %}
+                                </label>
+                            </div>
+
+                            <div class="mb-2">
+                                <label for="id_poll_closes_at" class="form-label">{% translate "Close poll at (optional)" %}</label>
+                                <input type="datetime-local" id="id_poll_closes_at" name="poll_closes_at" class="form-control" style="max-width:280px;">
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-plus fa-fw"></i>
@@ -101,5 +163,37 @@
         </form>
     </div>
 </div>
+
+<script>
+(function () {
+    var container = document.getElementById('pollOptionsContainer');
+    var addBtn = document.getElementById('addPollOption');
+    if (!container || !addBtn) return;
+
+    function renumberOptions() {
+        container.querySelectorAll('.poll-option-row').forEach(function (row, i) {
+            row.querySelector('.input-group-text').textContent = '#' + (i + 1);
+        });
+    }
+
+    addBtn.addEventListener('click', function () {
+        var rows = container.querySelectorAll('.poll-option-row');
+        if (rows.length >= 10) return;
+        var tpl = rows[0].cloneNode(true);
+        tpl.querySelector('input').value = '';
+        container.appendChild(tpl);
+        renumberOptions();
+    });
+
+    container.addEventListener('click', function (e) {
+        var btn = e.target.closest('.poll-remove-option');
+        if (!btn) return;
+        var rows = container.querySelectorAll('.poll-option-row');
+        if (rows.length <= 2) return;
+        btn.closest('.poll-option-row').remove();
+        renumberOptions();
+    });
+})();
+</script>
 
 {% endblock %}
