@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-03-02
+## [0.3.0] - 2026-03-01
 
 ### Added
 - **Post Reactions** — 5 emoji reactions (👍 o7 😂 😮 🔥) on every post via inline mini-forms; reaction counts shown on buttons; active reaction highlighted; AA bell notification sent to post author on first reaction

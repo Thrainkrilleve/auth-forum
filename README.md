@@ -14,7 +14,11 @@ A full-featured forum plugin for [Alliance Auth](https://gitlab.com/allianceauth
 - **Thread Locking & Pinning**  Moderators can lock or pin threads
 - **Unread Tracking**  Threads show an unread badge until the user visits them
 - **EVE Character Avatars**  Portrait, corporation, and alliance displayed on every post
-- **AA Bell Notifications**  Subscribers are notified via the Alliance Auth notification bell on new replies
+- **Post Reactions**  5 emoji reactions (👍 o7 😂 😮 🔥) on every post; AA bell notification sent to post author
+- **Thread Subscriptions**  Subscribe/unsubscribe per thread; auto-subscribed on first post or reply; AA bell on new replies
+- **Polls**  Optional poll on any new thread with single or multi-choice voting and optional close date
+- **Markdown Rendering**  Full Markdown support via `mistune` — headers, lists, tables, code fences, strikethrough; custom `[img]` and `[quote]` tags preserved
+- **AA Bell Notifications**  Subscribers are notified via the Alliance Auth notification bell on new replies and reactions
 - **Discord Integration**  Optional: posts new threads/replies to a Discord channel via `aadiscordbot` (never a hard dependency)
 - **GDPR / AVOID_CDN Ready**  All CSS and JS are served as local static files  zero CDN references
 - **Django Admin**  Full admin interface with bulk lock/pin/unpin actions
@@ -27,6 +31,7 @@ A full-featured forum plugin for [Alliance Auth](https://gitlab.com/allianceauth
 - Alliance Auth >= 4.0.0
 - Python >= 3.10
 - Django >= 4.2
+- [mistune](https://github.com/lepture/mistune) >= 3.0.0 *(installed automatically as a dependency)*
 
 ### Step 1  Install the Package
 
@@ -185,6 +190,9 @@ AUTH_FORUM_SEARCH_MIN_LENGTH = 3
 
 # Send AA bell notifications to thread subscribers on new replies (default: True)
 AUTH_FORUM_NOTIFY_REPLIES = True
+
+# Send AA bell notifications to post authors when their post receives a reaction (default: True)
+AUTH_FORUM_NOTIFY_REACTIONS = True
 
 # Discord channel ID to post new thread / reply notifications to.
 # Requires aadiscordbot to be installed. Leave None to disable.
