@@ -81,7 +81,7 @@ Restart your Alliance Auth services.
 
 Grant permissions via the Alliance Auth admin panel (`/admin`) → **Auth** → **Groups** → assign to the relevant group(s).
 
-There are two permissions. Assign them based on the role breakdown below.
+There are three permissions. Assign them based on the role breakdown below.
 
 ---
 
@@ -118,7 +118,7 @@ Grant this to officers, directors, or anyone who should be able to moderate and 
 | Delete any post | Can delete posts written by any user |
 | See hidden categories | Hidden categories (marked **is_hidden** in admin) are visible to moderators |
 | See hidden boards | Hidden boards are visible to moderators regardless of group/state restrictions |
-| Bypass board access control | Can access boards restricted to specific groups or states even if not a member of those groups/states |
+| Bypass board access control | Full bypass — same as `bypass_board_restrictions` below, plus also sees hidden boards |
 | Create categories | Can add new top-level categories directly from the forum index page |
 | Edit categories | Can rename/reorder/hide categories from the forum index page |
 | Delete categories | Can delete a category and all its boards/threads/posts |
@@ -127,6 +127,19 @@ Grant this to officers, directors, or anyone who should be able to moderate and 
 | Delete boards | Can delete a board and all its threads/posts |
 
 > **Tip:** `manage_forum` does **not** imply Django superuser or Django admin access. It only affects what the user can do inside the forum plugin itself.
+
+---
+
+#### `auth_forum.bypass_board_restrictions`  Alliance-wide / Cross-board Access
+
+Grant this to members who should be able to read all boards regardless of per-board group or state restrictions, **without** giving them full moderator powers.
+
+| Capability | Details |
+|---|---|
+| All `basic_access` actions | Everything a standard member can do |
+| Bypass board group/state restrictions | Can enter any board even if the board is restricted to specific groups or states they don't belong to |
+
+> **Tip:** This permission does **not** reveal hidden boards (those require `manage_forum`), and does **not** grant any moderation capabilities (lock/pin/delete/manage). It is purely an access bypass.
 
 ## Updating
 

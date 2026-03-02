@@ -31,8 +31,8 @@ def user_can_access_board(user, board: Board) -> bool:
     if not user.has_perm("auth_forum.basic_access"):
         return False
 
-    # Moderators bypass all board restrictions
-    if user.has_perm("auth_forum.manage_forum"):
+    # Moderators bypass all board restrictions; so do users with specific bypass perm
+    if user.has_perm("auth_forum.manage_forum") or user.has_perm("auth_forum.bypass_board_restrictions"):
         return True
 
     board_groups = board.groups.all()
@@ -77,6 +77,9 @@ def get_accessible_boards(user) -> QuerySet:
     # Moderators see all boards (including hidden) and bypass access restrictions
     if user.has_perm("auth_forum.manage_forum"):
         return list(boards)
+    # Users with bypass perm see all non-hidden boards regardless of group/state
+    if user.has_perm("auth_forum.bypass_board_restrictions"):
+        return list(boards.filter(is_hidden=False))
     return [b for b in boards if not b.is_hidden and user_can_access_board(user, b)]
 
 

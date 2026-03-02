@@ -13,6 +13,7 @@ class General(models.Model):
         permissions = (
             ("basic_access", "Can access the forum"),
             ("manage_forum", "Can moderate the forum (lock/pin/delete)"),
+            ("bypass_board_restrictions", "Can access boards regardless of group/state restrictions"),
         )
 
 

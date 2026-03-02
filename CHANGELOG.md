@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-03-01
+
+### Added
+- New permission `auth_forum.bypass_board_restrictions` — lets a user access boards regardless of per-board group/state restrictions without granting full moderator powers
+- Migration `0002_bypass_board_restrictions_permission.py` creates the new permission in the DB
+- README updated to document the new permission as a distinct third permission
+
 ## [0.2.3] - 2026-03-01
 
 ### Fixed
