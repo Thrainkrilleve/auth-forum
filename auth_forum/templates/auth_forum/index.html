@@ -1,0 +1,138 @@
+{% extends 'auth_forum/base.html' %}
+{% load i18n static %}
+
+{% block forum_page_title %}{% translate "Forum" %}{% endblock %}
+
+{% block forum_content %}
+
+{# ---- Page header ---- #}
+<div class="forum-page-header">
+    <h1 class="forum-page-title">
+        <i class="fas fa-comments fa-fw"></i>
+        {% translate "Forum" %}
+        {% if total_unread %}
+        <span class="forum-unread-badge">{{ total_unread }}</span>
+        {% endif %}
+    </h1>
+    <a href="{% url 'auth_forum:search' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-search fa-fw"></i> {% translate "Search" %}
+    </a>
+</div>
+
+{# ---- Category accordion ---- #}
+{% if cat_data %}
+<div class="accordion forum-index-accordion" id="forumAccordion">
+
+    {% for item in cat_data %}
+    {% with cat=item.category boards=item.boards %}
+    <div class="accordion-item border mb-3 rounded">
+
+        <h2 class="accordion-header" id="heading-cat-{{ cat.pk }}">
+            <button class="accordion-button rounded"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapse-cat-{{ cat.pk }}"
+                    aria-expanded="true"
+                    aria-controls="collapse-cat-{{ cat.pk }}">
+                {{ cat.name }}
+                {% if cat.description %}
+                <small class="text-muted ms-2 fw-normal">{{ cat.description }}</small>
+                {% endif %}
+            </button>
+        </h2>
+
+        <div id="collapse-cat-{{ cat.pk }}"
+             class="accordion-collapse collapse show"
+             aria-labelledby="heading-cat-{{ cat.pk }}"
+             data-bs-parent="#forumAccordion">
+            <div class="accordion-body p-0">
+
+                {# Board list header #}
+                <div class="forum-board-header">
+                    <div>{% translate "Board" %}</div>
+                    <div class="col-stats">{% translate "Threads" %}</div>
+                    <div class="col-stats">{% translate "Posts" %}</div>
+                    <div class="col-last-post">{% translate "Last Post" %}</div>
+                </div>
+
+                {# Board rows #}
+                {% for meta in boards %}
+                {% with b=meta.board %}
+                <div class="forum-board-row">
+
+                    {# Name + description #}
+                    <div>
+                        <div class="forum-board-name d-flex align-items-center gap-2">
+                            {% if meta.unread_count %}
+                            <span class="forum-unread-dot"
+                                  title="{{ meta.unread_count }} {% translate 'unread' %}"></span>
+                            {% endif %}
+                            <a href="{% url 'auth_forum:board' b.slug %}">
+                                <i class="fas fa-folder-open fa-fw me-1"></i>{{ b.name }}
+                            </a>
+                            {% if meta.unread_count %}
+                            <span class="forum-unread-badge">{{ meta.unread_count }}</span>
+                            {% endif %}
+                        </div>
+                        {% if b.description %}
+                        <div class="forum-board-desc">{{ b.description }}</div>
+                        {% endif %}
+                    </div>
+
+                    {# Thread count #}
+                    <div class="forum-stats col-stats">
+                        <i class="fas fa-list fa-fw"></i>
+                        {{ meta.thread_count }}
+                    </div>
+
+                    {# Post count #}
+                    <div class="forum-stats col-stats">
+                        <i class="fas fa-comment fa-fw"></i>
+                        {{ meta.post_count }}
+                    </div>
+
+                    {# Last post #}
+                    <div class="forum-last-post col-last-post">
+                        {% if meta.last_post %}
+                        <div>
+                            <a href="{% url 'auth_forum:thread' meta.last_post.thread.pk %}"
+                               title="{{ meta.last_post.thread.title }}">
+                                {{ meta.last_post.thread.title|truncatechars:40 }}
+                            </a>
+                        </div>
+                        <div class="mt-1">
+                            {% if meta.last_post.author %}
+                            <i class="fas fa-user fa-fw"></i>
+                            {{ meta.last_post.author.username }}
+                            &middot;
+                            {% endif %}
+                            <i class="fas fa-clock fa-fw"></i>
+                            {{ meta.last_post.created_at|timesince }}{% translate " ago" %}
+                        </div>
+                        {% else %}
+                        <span class="text-muted">{% translate "No posts yet." %}</span>
+                        {% endif %}
+                    </div>
+
+                </div>
+                {% endwith %}
+                {% endfor %}
+
+            </div>
+        </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+
+</div>
+
+{% else %}
+<div class="card">
+    <div class="card-body text-center text-muted py-5">
+        <i class="fas fa-comments fa-3x mb-3 d-block"></i>
+        <p>{% translate "No boards available yet. Check back later or contact an administrator." %}</p>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

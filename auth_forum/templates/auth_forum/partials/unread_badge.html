@@ -1,0 +1,4 @@
+{% load i18n %}
+{% if unread_count %}
+<span class="forum-unread-badge" title="{{ unread_count }} {% translate 'unread thread(s)' %}">{{ unread_count }}</span>
+{% endif %}

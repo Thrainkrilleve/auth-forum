@@ -1,0 +1,681 @@
+/*
+ * auth_forum / forum.css
+ * -----------------------------------------------------------------------
+ * Custom EVE-themed forum styles for Alliance Auth.
+ * All colours are derived from Bootstrap 5 CSS custom properties so they
+ * automatically adapt to the Darkly / Flatly / Materia theme selections.
+ * Zero CDN references – fully GDPR compliant.
+ * -----------------------------------------------------------------------
+ */
+
+/* =========================================================================
+   1. Design Tokens
+   ========================================================================= */
+
+:root {
+    --forum-accent:          var(--bs-primary, #0d6efd);
+    --forum-accent-rgb:      var(--bs-primary-rgb, 13, 110, 253);
+    --forum-surface:         var(--bs-body-bg, #fff);
+    --forum-surface-alt:     var(--bs-tertiary-bg, #f8f9fa);
+    --forum-border:          var(--bs-border-color, #dee2e6);
+    --forum-text:            var(--bs-body-color, #212529);
+    --forum-text-muted:      var(--bs-secondary-color, #6c757d);
+    --forum-gold:            #f5a623;
+    --forum-locked:          var(--bs-secondary-color, #6c757d);
+    --forum-unread-dot:      var(--bs-info, #0dcaf0);
+    --forum-avatar-size:     64px;
+    --forum-avatar-radius:   6px;
+    --forum-card-radius:     8px;
+    --forum-transition:      0.18s ease;
+}
+
+/* =========================================================================
+   2. General Layout
+   ========================================================================= */
+
+.forum-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 0.5rem;
+}
+
+/* =========================================================================
+   3. Index — Category / Board Table
+   ========================================================================= */
+
+.forum-index-accordion .accordion-button {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--forum-text);
+    background-color: var(--forum-surface-alt);
+}
+
+.forum-index-accordion .accordion-button:not(.collapsed) {
+    color: var(--forum-accent);
+    border-bottom: 2px solid var(--forum-accent);
+    background-color: var(--forum-surface-alt);
+    box-shadow: none;
+}
+
+.forum-board-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 2fr;
+    align-items: center;
+    gap: 0;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--forum-border);
+    transition: background-color var(--forum-transition);
+}
+
+.forum-board-row:hover {
+    background-color: rgba(var(--forum-accent-rgb), 0.05);
+}
+
+.forum-board-row:last-child {
+    border-bottom: none;
+}
+
+.forum-board-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 2fr;
+    gap: 0;
+    padding: 0.4rem 1rem;
+    background-color: var(--forum-surface-alt);
+    border-bottom: 2px solid var(--forum-border);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--forum-text-muted);
+}
+
+.forum-board-name {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.forum-board-name a {
+    color: var(--forum-text);
+    text-decoration: none;
+    transition: color var(--forum-transition);
+}
+
+.forum-board-name a:hover {
+    color: var(--forum-accent);
+}
+
+.forum-board-desc {
+    font-size: 0.8rem;
+    color: var(--forum-text-muted);
+    margin-top: 2px;
+}
+
+.forum-stats {
+    font-size: 0.85rem;
+    color: var(--forum-text-muted);
+}
+
+.forum-last-post {
+    font-size: 0.8rem;
+    color: var(--forum-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.forum-last-post a {
+    color: var(--forum-text);
+    text-decoration: none;
+}
+
+.forum-last-post a:hover {
+    color: var(--forum-accent);
+    text-decoration: underline;
+}
+
+/* =========================================================================
+   4. Unread Badge / Dot
+   ========================================================================= */
+
+.forum-unread-dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background-color: var(--forum-unread-dot);
+    vertical-align: middle;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+
+.forum-unread-badge {
+    font-size: 0.7rem;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background-color: var(--forum-unread-dot);
+    color: #fff;
+    font-weight: 700;
+    vertical-align: middle;
+}
+
+/* =========================================================================
+   5. Board View — Thread List
+   ========================================================================= */
+
+.forum-thread-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.forum-thread-table thead th {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--forum-text-muted);
+    border-bottom: 2px solid var(--forum-border);
+    padding: 0.6rem 1rem;
+    background-color: var(--forum-surface-alt);
+}
+
+.forum-thread-row td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--forum-border);
+    vertical-align: middle;
+    transition: background-color var(--forum-transition);
+}
+
+.forum-thread-row:hover td {
+    background-color: rgba(var(--forum-accent-rgb), 0.04);
+}
+
+.forum-thread-title-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.forum-thread-title-cell a {
+    color: var(--forum-text);
+    font-weight: 500;
+    text-decoration: none;
+    transition: color var(--forum-transition);
+}
+
+.forum-thread-title-cell a:hover {
+    color: var(--forum-accent);
+}
+
+/* Pinned & Locked pill badges */
+
+.forum-badge-pinned {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+    background-color: rgba(245, 166, 35, 0.18);
+    color: var(--forum-gold);
+    border: 1px solid var(--forum-gold);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.forum-badge-locked {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+    background-color: var(--forum-surface-alt);
+    color: var(--forum-locked);
+    border: 1px solid var(--forum-border);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* =========================================================================
+   6. Thread View — Post Cards
+   ========================================================================= */
+
+.forum-post-card {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--forum-border);
+    border-radius: var(--forum-card-radius);
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+    background-color: var(--forum-surface);
+    transition: box-shadow var(--forum-transition);
+}
+
+.forum-post-card:hover {
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
+}
+
+.forum-post-card--first {
+    border-left: 3px solid var(--forum-accent);
+}
+
+/* Left sidebar: avatar + meta */
+
+.forum-post-sidebar {
+    width: 110px;
+    min-width: 110px;
+    padding: 1rem 0.75rem;
+    background-color: var(--forum-surface-alt);
+    border-right: 1px solid var(--forum-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+}
+
+.forum-avatar-wrap {
+    position: relative;
+    width: var(--forum-avatar-size);
+    height: var(--forum-avatar-size);
+}
+
+.forum-avatar {
+    width: var(--forum-avatar-size);
+    height: var(--forum-avatar-size);
+    border-radius: var(--forum-avatar-radius);
+    object-fit: cover;
+    display: block;
+}
+
+.forum-corp-logo {
+    position: absolute;
+    bottom: -3px;
+    right: -3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    border: 1px solid var(--forum-border);
+    background-color: var(--forum-surface);
+    object-fit: contain;
+}
+
+.forum-poster-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--forum-text);
+    word-break: break-word;
+    line-height: 1.2;
+}
+
+.forum-poster-corp {
+    font-size: 0.7rem;
+    color: var(--forum-text-muted);
+    word-break: break-word;
+    line-height: 1.2;
+}
+
+.forum-poster-postcount {
+    font-size: 0.68rem;
+    color: var(--forum-text-muted);
+    border-top: 1px solid var(--forum-border);
+    padding-top: 6px;
+    width: 100%;
+    text-align: center;
+}
+
+/* Right area: post content */
+
+.forum-post-body {
+    flex: 1;
+    padding: 1rem 1.25rem;
+    min-width: 0;
+}
+
+.forum-post-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.forum-post-timestamp {
+    font-size: 0.78rem;
+    color: var(--forum-text-muted);
+}
+
+.forum-post-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.forum-post-content {
+    font-size: 0.93rem;
+    line-height: 1.7;
+    color: var(--forum-text);
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+/* Quote block */
+
+.forum-quote-block {
+    position: relative;
+    border-left: 3px solid var(--forum-accent);
+    padding: 0.6rem 1rem 0.6rem 1rem;
+    margin: 0.75rem 0;
+    background-color: var(--forum-surface-alt);
+    border-radius: 0 var(--forum-card-radius) var(--forum-card-radius) 0;
+    font-size: 0.88rem;
+    color: var(--forum-text-muted);
+}
+
+.forum-quote-author {
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: var(--forum-accent);
+    margin-bottom: 4px;
+}
+
+/* =========================================================================
+   7. Reply Form
+   ========================================================================= */
+
+.forum-reply-card {
+    border: 1px solid var(--forum-border);
+    border-radius: var(--forum-card-radius);
+    background-color: var(--forum-surface);
+    overflow: hidden;
+    margin-top: 1.5rem;
+}
+
+.forum-reply-header {
+    padding: 0.75rem 1.25rem;
+    background-color: var(--forum-surface-alt);
+    border-bottom: 1px solid var(--forum-border);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.forum-reply-body {
+    padding: 1.25rem;
+}
+
+.forum-reply-textarea {
+    resize: vertical;
+    min-height: 140px;
+    font-family: inherit;
+    font-size: 0.93rem;
+    border-radius: 6px;
+    border: 1px solid var(--forum-border);
+    background-color: var(--forum-surface);
+    color: var(--forum-text);
+    padding: 0.6rem 0.85rem;
+    transition: border-color var(--forum-transition), box-shadow var(--forum-transition);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.forum-reply-textarea:focus {
+    outline: none;
+    border-color: var(--forum-accent);
+    box-shadow: 0 0 0 3px rgba(var(--forum-accent-rgb), 0.2);
+}
+
+.forum-char-counter {
+    font-size: 0.75rem;
+    color: var(--forum-text-muted);
+    text-align: right;
+    margin-top: 4px;
+}
+
+.forum-char-counter.over-limit {
+    color: var(--bs-danger, #dc3545);
+    font-weight: 700;
+}
+
+/* Locked thread notice */
+
+.forum-locked-notice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 1rem 1.25rem;
+    background-color: var(--forum-surface-alt);
+    border: 1px solid var(--forum-border);
+    border-radius: var(--forum-card-radius);
+    color: var(--forum-text-muted);
+    font-size: 0.9rem;
+    margin-top: 1.5rem;
+}
+
+/* =========================================================================
+   8. Moderator Toolbar
+   ========================================================================= */
+
+.forum-mod-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.6rem 1rem;
+    background-color: rgba(var(--forum-accent-rgb), 0.06);
+    border: 1px dashed rgba(var(--forum-accent-rgb), 0.4);
+    border-radius: var(--forum-card-radius);
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.forum-mod-toolbar .forum-mod-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--forum-accent);
+    margin-right: 4px;
+}
+
+/* =========================================================================
+   9. Search
+   ========================================================================= */
+
+.forum-search-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.forum-search-input {
+    flex: 1;
+    padding: 0.55rem 1rem;
+    font-size: 0.95rem;
+    border: 1px solid var(--forum-border);
+    border-radius: 6px;
+    background-color: var(--forum-surface);
+    color: var(--forum-text);
+    transition: border-color var(--forum-transition), box-shadow var(--forum-transition);
+}
+
+.forum-search-input:focus {
+    outline: none;
+    border-color: var(--forum-accent);
+    box-shadow: 0 0 0 3px rgba(var(--forum-accent-rgb), 0.2);
+}
+
+.forum-search-result {
+    border: 1px solid var(--forum-border);
+    border-radius: var(--forum-card-radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    background-color: var(--forum-surface);
+    transition: box-shadow var(--forum-transition);
+}
+
+.forum-search-result:hover {
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+}
+
+.forum-search-result-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--forum-text);
+    text-decoration: none;
+}
+
+.forum-search-result-title:hover {
+    color: var(--forum-accent);
+}
+
+.forum-search-result-meta {
+    font-size: 0.78rem;
+    color: var(--forum-text-muted);
+    margin-top: 2px;
+}
+
+.forum-search-result-snippet {
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--forum-text-muted);
+    margin-top: 6px;
+    border-top: 1px solid var(--forum-border);
+    padding-top: 6px;
+}
+
+mark {
+    background-color: rgba(var(--forum-accent-rgb), 0.2);
+    color: var(--forum-text);
+    border-radius: 2px;
+    padding: 0 2px;
+}
+
+/* =========================================================================
+   10. Dashboard Widget
+   ========================================================================= */
+
+.forum-dashboard-widget .forum-widget-thread {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--forum-border);
+    font-size: 0.85rem;
+}
+
+.forum-dashboard-widget .forum-widget-thread:last-child {
+    border-bottom: none;
+}
+
+.forum-dashboard-widget .forum-widget-thread a {
+    color: var(--forum-text);
+    text-decoration: none;
+    font-weight: 500;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.forum-dashboard-widget .forum-widget-thread a:hover {
+    color: var(--forum-accent);
+}
+
+.forum-dashboard-widget .forum-widget-meta {
+    font-size: 0.72rem;
+    color: var(--forum-text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* =========================================================================
+   11. Breadcrumbs
+   ========================================================================= */
+
+.forum-breadcrumb {
+    font-size: 0.82rem;
+    padding: 0.5rem 0 1rem;
+}
+
+.forum-breadcrumb a {
+    color: var(--forum-text-muted);
+    text-decoration: none;
+}
+
+.forum-breadcrumb a:hover {
+    color: var(--forum-accent);
+    text-decoration: underline;
+}
+
+.forum-breadcrumb .separator {
+    margin: 0 6px;
+    color: var(--forum-border);
+}
+
+/* =========================================================================
+   12. Page Header
+   ========================================================================= */
+
+.forum-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.forum-page-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--forum-text);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* =========================================================================
+   13. Pagination
+   ========================================================================= */
+
+.forum-pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+/* =========================================================================
+   14. Responsive
+   ========================================================================= */
+
+@media (max-width: 768px) {
+    .forum-board-row,
+    .forum-board-header {
+        grid-template-columns: 1fr;
+    }
+
+    .forum-board-header .col-stats,
+    .forum-board-header .col-last-post,
+    .forum-board-row .col-stats,
+    .forum-board-row .col-last-post {
+        display: none;
+    }
+
+    .forum-post-sidebar {
+        width: 72px;
+        min-width: 72px;
+        --forum-avatar-size: 48px;
+        padding: 0.75rem 0.5rem;
+    }
+
+    .forum-poster-corp,
+    .forum-poster-postcount {
+        display: none;
+    }
+}

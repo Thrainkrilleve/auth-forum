@@ -1,0 +1,173 @@
+{% extends 'auth_forum/base.html' %}
+{% load i18n static %}
+
+{% block forum_page_title %}{{ thread.title }}{% endblock %}
+
+{% block forum_content %}
+
+{# ---- Breadcrumb ---- #}
+<nav class="forum-breadcrumb" aria-label="breadcrumb">
+    <a href="{% url 'auth_forum:index' %}"><i class="fas fa-home fa-fw"></i> {% translate "Forum" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'auth_forum:board' board.slug %}">{{ board.name }}</a>
+    <span class="separator">/</span>
+    <strong>{{ thread.title|truncatechars:60 }}</strong>
+</nav>
+
+{# ---- Page header ---- #}
+<div class="forum-page-header">
+    <h1 class="forum-page-title" style="font-size:1.2rem; flex-wrap:wrap;">
+        {% if thread.is_locked %}
+        <span class="forum-badge-locked me-1">
+            <i class="fas fa-lock fa-fw"></i> {% translate "Locked" %}
+        </span>
+        {% endif %}
+        {% if thread.is_pinned %}
+        <span class="forum-badge-pinned me-1">
+            <i class="fas fa-thumbtack fa-fw"></i> {% translate "Pinned" %}
+        </span>
+        {% endif %}
+        {{ thread.title }}
+    </h1>
+    <div class="d-flex align-items-center gap-2">
+        <a href="{% url 'auth_forum:search' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-search fa-fw"></i>
+        </a>
+        <a href="{% url 'auth_forum:board' board.slug %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left fa-fw"></i> {% translate "Back to" %} {{ board.name }}
+        </a>
+    </div>
+</div>
+
+{# ---- Moderator Toolbar ---- #}
+{% if can_moderate %}
+<div class="forum-mod-toolbar">
+    <span class="forum-mod-label"><i class="fas fa-shield-alt fa-fw"></i> {% translate "Mod" %}</span>
+
+    <form method="post" action="{% url 'auth_forum:lock_thread' thread.pk %}" class="d-inline">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm {% if thread.is_locked %}btn-warning{% else %}btn-outline-warning{% endif %}">
+            <i class="fas fa-lock fa-fw"></i>
+            {% if thread.is_locked %}{% translate "Unlock" %}{% else %}{% translate "Lock" %}{% endif %}
+        </button>
+    </form>
+
+    <form method="post" action="{% url 'auth_forum:pin_thread' thread.pk %}" class="d-inline">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm {% if thread.is_pinned %}btn-warning{% else %}btn-outline-secondary{% endif %}">
+            <i class="fas fa-thumbtack fa-fw"></i>
+            {% if thread.is_pinned %}{% translate "Unpin" %}{% else %}{% translate "Pin" %}{% endif %}
+        </button>
+    </form>
+</div>
+{% endif %}
+
+{# ---- Post list ---- #}
+{% for post in page_obj %}
+{% include 'auth_forum/partials/post_card.html' with post=post thread=thread can_moderate=can_moderate %}
+{% endfor %}
+
+{# ---- Pagination ---- #}
+{% if page_obj.has_other_pages %}
+<div class="forum-pagination">
+    <nav>
+        <ul class="pagination pagination-sm mb-0">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+
+            {% for n in page_obj.paginator.page_range %}
+            {% if n == page_obj.number %}
+            <li class="page-item active"><span class="page-link">{{ n }}</span></li>
+            {% elif n >= page_obj.number|add:"-3" and n <= page_obj.number|add:"3" %}
+            <li class="page-item"><a class="page-link" href="?page={{ n }}">{{ n }}</a></li>
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endif %}
+
+{# ---- Reply form / Locked notice ---- #}
+{% if can_reply %}
+<div class="forum-reply-card" id="reply-form">
+    <div class="forum-reply-header">
+        <i class="fas fa-reply fa-fw me-1"></i>
+        {% translate "Post a Reply" %}
+        <small class="text-muted fw-normal ms-2">
+            {% translate "Ctrl+Enter to submit" %}
+        </small>
+    </div>
+    <div class="forum-reply-body">
+        <form method="post" action="{% url 'auth_forum:thread' thread.pk %}">
+            {% csrf_token %}
+
+            {# Editor toolbar #}
+            <div class="forum-editor-wrap">
+                <div class="forum-editor-toolbar" aria-label="{% translate 'Formatting toolbar' %}">
+                    <button type="button" class="btn-editor"
+                            data-wrap-before="**" data-wrap-after="**"
+                            title="{% translate 'Bold' %}">
+                        <i class="fas fa-bold"></i>
+                    </button>
+                    <button type="button" class="btn-editor"
+                            data-wrap-before="_" data-wrap-after="_"
+                            title="{% translate 'Italic' %}">
+                        <i class="fas fa-italic"></i>
+                    </button>
+                    <button type="button" class="btn-editor"
+                            data-wrap-before="`" data-wrap-after="`"
+                            title="{% translate 'Inline code' %}">
+                        <i class="fas fa-code"></i>
+                    </button>
+                    <button type="button" class="btn-editor"
+                            data-wrap-before="[quote]&#10;" data-wrap-after="&#10;[/quote]"
+                            title="{% translate 'Quote' %}">
+                        <i class="fas fa-quote-left"></i>
+                    </button>
+                </div>
+                <textarea name="content"
+                          class="forum-reply-textarea with-toolbar"
+                          placeholder="{% translate 'Write your reply here…' %}"
+                          data-max-length="10000"
+                          required></textarea>
+            </div>
+            <div class="forum-char-counter">10000 {% translate "characters remaining" %}</div>
+
+            <div class="mt-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane fa-fw"></i>
+                    {% translate "Post Reply" %}
+                </button>
+                <a href="{% url 'auth_forum:board' board.slug %}"
+                   class="btn btn-outline-secondary">
+                    {% translate "Cancel" %}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% else %}
+<div class="forum-locked-notice">
+    <i class="fas fa-lock fa-2x"></i>
+    <div>
+        <strong>{% translate "Thread locked" %}</strong>
+        <div class="mt-1">{% translate "This thread has been locked and is no longer accepting replies." %}</div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

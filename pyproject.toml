@@ -1,0 +1,109 @@
+﻿[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "allianceauth-auth-forum"
+version = "0.1.0"
+description = "A full-featured forum plugin for Alliance Auth"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.10"
+authors = [
+    { name = "Thrainkrilleve" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Framework :: Django :: 4.2",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+]
+dependencies = [
+    "allianceauth>=4.0.0",
+]
+
+[project.optional-dependencies]
+discord = ["allianceauth-discordbot"]
+dev = [
+    "pre-commit",
+    "black",
+    "flake8",
+    "isort",
+]
+test = [
+    "coverage",
+]
+
+[project.urls]
+Homepage = "https://github.com/Thrainkrilleve/auth-forum"
+Documentation = "https://github.com/Thrainkrilleve/auth-forum#readme"
+Source = "https://github.com/Thrainkrilleve/auth-forum"
+Changelog = "https://github.com/Thrainkrilleve/auth-forum/blob/main/CHANGELOG.md"
+Tracker = "https://github.com/Thrainkrilleve/auth-forum/issues"
+
+# ---------------------------------------------------------------------------
+# Packaging
+# ---------------------------------------------------------------------------
+# find all sub-packages of auth_forum (including migrations, cogs, tests, etc.)
+[tool.setuptools.packages.find]
+include = ["auth_forum*"]
+
+# Non-Python files that must be bundled inside the wheel / sdist.
+# This is what allows users to run `auth migrate` without ever running
+# `makemigrations`  the pre-built migrations ship with the package.
+[tool.setuptools.package-data]
+auth_forum = [
+    "migrations/*.py",
+    "templates/auth_forum/*.html",
+    "templates/auth_forum/**/*.html",
+    "static/auth_forum/css/*.css",
+    "static/auth_forum/js/*.js",
+    "static/auth_forum/img/*",
+]
+
+# ---------------------------------------------------------------------------
+# Linting / formatting
+# ---------------------------------------------------------------------------
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+sections = [
+    "FUTURE",
+    "STDLIB",
+    "THIRDPARTY",
+    "DJANGO",
+    "ALLIANCEAUTH",
+    "FIRSTPARTY",
+    "LOCALFOLDER",
+]
+known_allianceauth = ["allianceauth", "app_utils"]
+known_django = ["django", "django_webtest", "esi", "eveuniverse"]
+
+[tool.pylint.'MASTER']
+ignore-patterns = ["__init__.py", "auth_hooks.py", "apps.py", "admin.py"]
+ignore-paths = ["^.*/tests/.*$", "^.*/migrations/.*$"]
+
+[tool.pylint.'BASIC']
+good-names = ["i", "j", "k", "ex"]
+
+[tool.pylint.'FORMAT']
+max-line-length = 120
+
+[tool.pylint.'MESSAGES CONTROL']
+disable = [
+    "cyclic-import",
+    "fixme",
+    "import-outside-toplevel",
+    "imported-auth-user",
+    "too-few-public-methods",
+]

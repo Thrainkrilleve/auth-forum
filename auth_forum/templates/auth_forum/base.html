@@ -1,0 +1,22 @@
+{% extends 'allianceauth/base-bs5.html' %}
+{% load i18n static %}
+
+{% block page_title %}{% block forum_page_title %}{% translate "Forum" %}{% endblock %} - {% translate "Forum" %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'auth_forum/css/forum.css' %}">
+<link rel="stylesheet" href="{% static 'auth_forum/css/forum-editor.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="forum-wrapper">
+    {% block forum_content %}{% endblock %}
+</div>
+{% endblock %}
+
+{% block extra_javascript %}
+<script src="{% static 'auth_forum/js/forum.js' %}"></script>
+{% block forum_extra_js %}{% endblock %}
+{% endblock %}
+
+{% block extra_script %}{% endblock %}

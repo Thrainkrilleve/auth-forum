@@ -1,0 +1,157 @@
+{% extends 'auth_forum/base.html' %}
+{% load i18n static %}
+
+{% block forum_page_title %}{{ board.name }}{% endblock %}
+
+{% block forum_content %}
+
+{# ---- Breadcrumb ---- #}
+<nav class="forum-breadcrumb" aria-label="breadcrumb">
+    <a href="{% url 'auth_forum:index' %}"><i class="fas fa-home fa-fw"></i> {% translate "Forum" %}</a>
+    <span class="separator">/</span>
+    <span>{{ board.category.name }}</span>
+    <span class="separator">/</span>
+    <strong>{{ board.name }}</strong>
+</nav>
+
+{# ---- Page header ---- #}
+<div class="forum-page-header">
+    <div>
+        <h1 class="forum-page-title">
+            <i class="fas fa-folder-open fa-fw"></i>
+            {{ board.name }}
+        </h1>
+        {% if board.description %}
+        <p class="text-muted mb-0" style="font-size:0.9rem;">{{ board.description }}</p>
+        {% endif %}
+    </div>
+    <a href="{% url 'auth_forum:new_thread' board.slug %}"
+       class="btn btn-primary">
+        <i class="fas fa-plus fa-fw"></i> {% translate "New Thread" %}
+    </a>
+</div>
+
+{# ---- Thread table ---- #}
+<div class="card">
+    <div class="card-body p-0">
+
+        {% if page_obj.object_list %}
+        <table class="forum-thread-table">
+            <thead>
+                <tr>
+                    <th style="width:55%">{% translate "Thread" %}</th>
+                    <th class="text-center">{% translate "Replies" %}</th>
+                    <th class="text-center">{% translate "Views" %}</th>
+                    <th>{% translate "Last Activity" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in page_obj %}
+                <tr class="forum-thread-row">
+
+                    {# Title cell #}
+                    <td>
+                        <div class="forum-thread-title-cell">
+                            {% if t.id in unread_ids %}
+                            <span class="forum-unread-dot"
+                                  title="{% translate 'Unread posts' %}"></span>
+                            {% endif %}
+
+                            {% if t.is_pinned %}
+                            <span class="forum-badge-pinned">
+                                <i class="fas fa-thumbtack fa-fw"></i>
+                                {% translate "Pinned" %}
+                            </span>
+                            {% endif %}
+
+                            {% if t.is_locked %}
+                            <span class="forum-badge-locked">
+                                <i class="fas fa-lock fa-fw"></i>
+                                {% translate "Locked" %}
+                            </span>
+                            {% endif %}
+
+                            <a href="{% url 'auth_forum:thread' t.pk %}">{{ t.title }}</a>
+                        </div>
+                        <small class="text-muted ms-3">
+                            {% translate "by" %}
+                            {% if t.author %}{{ t.author.username }}{% else %}{% translate "deleted user" %}{% endif %}
+                            &middot;
+                            {{ t.created_at|date:"d M Y" }}
+                        </small>
+                    </td>
+
+                    {# Reply count #}
+                    <td class="text-center forum-stats">
+                        {{ t.post_count|add:"-1"|default:"0" }}
+                    </td>
+
+                    {# View count #}
+                    <td class="text-center forum-stats">{{ t.view_count }}</td>
+
+                    {# Last activity #}
+                    <td>
+                        {% with lp=t.last_post %}
+                        {% if lp %}
+                        <div style="font-size:0.82rem;">
+                            {% if lp.author %}{{ lp.author.username }}{% else %}—{% endif %}
+                        </div>
+                        <div style="font-size:0.78rem;" class="text-muted">
+                            {{ lp.created_at|timesince }}{% translate " ago" %}
+                        </div>
+                        {% else %}—{% endif %}
+                        {% endwith %}
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {# Pagination #}
+        {% if page_obj.has_other_pages %}
+        <div class="forum-pagination">
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for n in page_obj.paginator.page_range %}
+                    {% if n == page_obj.number %}
+                    <li class="page-item active"><span class="page-link">{{ n }}</span></li>
+                    {% elif n >= page_obj.number|add:"-3" and n <= page_obj.number|add:"3" %}
+                    <li class="page-item"><a class="page-link" href="?page={{ n }}">{{ n }}</a></li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center text-muted py-5">
+            <i class="fas fa-comment-slash fa-3x mb-3 d-block"></i>
+            <p>{% translate "No threads in this board yet." %}</p>
+            <a href="{% url 'auth_forum:new_thread' board.slug %}" class="btn btn-primary">
+                <i class="fas fa-plus fa-fw"></i> {% translate "Start the first thread" %}
+            </a>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

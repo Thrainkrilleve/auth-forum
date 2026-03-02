@@ -1,0 +1,71 @@
+/*
+ * auth_forum / forum-editor.css
+ * -----------------------------------------------------------------------
+ * Styles for the reply / edit post textarea and toolbar.
+ * -----------------------------------------------------------------------
+ */
+
+.forum-editor-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 6px 10px;
+    background-color: var(--forum-surface-alt);
+    border: 1px solid var(--forum-border);
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+}
+
+.forum-editor-toolbar .btn-editor {
+    padding: 2px 8px;
+    font-size: 0.8rem;
+    border: 1px solid var(--forum-border);
+    background-color: var(--forum-surface);
+    color: var(--forum-text);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    line-height: 1.5;
+}
+
+.forum-editor-toolbar .btn-editor:hover {
+    background-color: rgba(var(--forum-accent-rgb), 0.1);
+    border-color: var(--forum-accent);
+    color: var(--forum-accent);
+}
+
+.forum-reply-textarea.with-toolbar {
+    border-radius: 0 0 6px 6px;
+    border-top: none;
+}
+
+/* Preview pane */
+
+.forum-editor-preview {
+    display: none;
+    border: 1px solid var(--forum-border);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    min-height: 120px;
+    background-color: var(--forum-surface-alt);
+    font-size: 0.93rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--forum-text);
+}
+
+.forum-editor-preview.visible {
+    display: block;
+}
+
+/* Quote insertion highlight (flash) */
+
+@keyframes forum-flash {
+    0%   { background-color: rgba(var(--forum-accent-rgb), 0.3); }
+    100% { background-color: transparent; }
+}
+
+.forum-reply-textarea.flashed {
+    animation: forum-flash 0.5s ease-out;
+}

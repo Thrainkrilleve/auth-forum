@@ -1,0 +1,84 @@
+{% extends 'auth_forum/base.html' %}
+{% load i18n static %}
+
+{% block forum_page_title %}{% translate "Edit Post" %}{% endblock %}
+
+{% block forum_content %}
+
+{# Breadcrumb #}
+<nav class="forum-breadcrumb">
+    <a href="{% url 'auth_forum:index' %}"><i class="fas fa-home fa-fw"></i> {% translate "Forum" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'auth_forum:board' post.thread.board.slug %}">{{ post.thread.board.name }}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'auth_forum:thread' post.thread.pk %}">{{ post.thread.title|truncatechars:50 }}</a>
+    <span class="separator">/</span>
+    <strong>{% translate "Edit Post" %}</strong>
+</nav>
+
+<div class="forum-page-header">
+    <h1 class="forum-page-title">
+        <i class="fas fa-pen fa-fw"></i>
+        {% translate "Edit Post" %}
+    </h1>
+</div>
+
+<div class="card">
+    <div class="card-header text-muted" style="font-size:0.82rem;">
+        <i class="fas fa-info-circle fa-fw"></i>
+        {% translate "Originally posted" %}: {{ post.created_at }}
+        {% if post.updated_at != post.created_at %}
+        &nbsp;·&nbsp;
+        {% translate "Last edited" %}: {{ post.updated_at }}
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <div class="forum-editor-wrap">
+                    <div class="forum-editor-toolbar">
+                        <button type="button" class="btn-editor"
+                                data-wrap-before="**" data-wrap-after="**"
+                                title="{% translate 'Bold' %}">
+                            <i class="fas fa-bold"></i>
+                        </button>
+                        <button type="button" class="btn-editor"
+                                data-wrap-before="_" data-wrap-after="_"
+                                title="{% translate 'Italic' %}">
+                            <i class="fas fa-italic"></i>
+                        </button>
+                        <button type="button" class="btn-editor"
+                                data-wrap-before="`" data-wrap-after="`"
+                                title="{% translate 'Code' %}">
+                            <i class="fas fa-code"></i>
+                        </button>
+                        <button type="button" class="btn-editor"
+                                data-wrap-before="[quote]&#10;" data-wrap-after="&#10;[/quote]"
+                                title="{% translate 'Quote' %}">
+                            <i class="fas fa-quote-left"></i>
+                        </button>
+                    </div>
+                    <textarea name="content"
+                              class="forum-reply-textarea with-toolbar"
+                              data-max-length="10000"
+                              required>{{ post.content }}</textarea>
+                </div>
+                <div class="forum-char-counter"></div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save fa-fw"></i>
+                    {% translate "Save Changes" %}
+                </button>
+                <a href="{% url 'auth_forum:thread' post.thread.pk %}"
+                   class="btn btn-outline-secondary">
+                    {% translate "Cancel" %}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

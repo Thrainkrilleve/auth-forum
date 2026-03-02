@@ -1,0 +1,83 @@
+{% load i18n static %}
+{# Reusable post card. Requires: post (Post), can_moderate (bool), thread (Thread) #}
+<div class="forum-post-card{% if post.is_first_post %} forum-post-card--first{% endif %}" id="post-{{ post.pk }}">
+
+    {# ---- Left sidebar ---- #}
+    <div class="forum-post-sidebar">
+        <div class="forum-avatar-wrap">
+            {% if post.char_ctx.portrait_url %}
+            <img src="{{ post.char_ctx.portrait_url }}"
+                 alt="{{ post.char_ctx.character_name }}"
+                 class="forum-avatar"
+                 loading="lazy">
+            {% else %}
+            <img src="{% static 'auth_forum/img/default_avatar.svg' %}"
+                 alt="{% translate 'No character' %}"
+                 class="forum-avatar">
+            {% endif %}
+        </div>
+        <div class="forum-poster-name">
+            {{ post.char_ctx.character_name|default:post.author.username }}
+        </div>
+        {% if post.char_ctx.corporation_name %}
+        <div class="forum-poster-corp" title="{{ post.char_ctx.corporation_name }}">
+            {{ post.char_ctx.corporation_name }}
+        </div>
+        {% endif %}
+        {% if post.char_ctx.alliance_name %}
+        <div class="forum-poster-corp" title="{{ post.char_ctx.alliance_name }}">
+            <em>{{ post.char_ctx.alliance_name }}</em>
+        </div>
+        {% endif %}
+        <div class="forum-poster-postcount">
+            <small>{{ post.post_total }} {% translate "posts" %}</small>
+        </div>
+    </div>
+
+    {# ---- Post body ---- #}
+    <div class="forum-post-body">
+        <div class="forum-post-header">
+            <span class="forum-post-timestamp">
+                <i class="fas fa-clock fa-fw"></i>
+                {{ post.created_at }}
+                {% if post.updated_at != post.created_at %}
+                &nbsp;·&nbsp;
+                <span class="text-muted" title="{% translate 'Last edited' %}: {{ post.updated_at }}">
+                    <i class="fas fa-pen fa-fw"></i> {% translate "edited" %}
+                </span>
+                {% endif %}
+            </span>
+            <div class="forum-post-actions">
+                {% if not thread.is_locked or can_moderate %}
+                <button class="btn btn-sm btn-outline-secondary forum-btn-quote"
+                        data-bs-toggle="tooltip"
+                        title="{% translate 'Quote this post' %}">
+                    <i class="fas fa-quote-left fa-fw"></i>
+                </button>
+                {% endif %}
+                {% if request.user == post.author or can_moderate %}
+                <a href="{% url 'auth_forum:edit_post' post.pk %}"
+                   class="btn btn-sm btn-outline-secondary"
+                   data-bs-toggle="tooltip"
+                   title="{% translate 'Edit post' %}">
+                    <i class="fas fa-pen fa-fw"></i>
+                </a>
+                <form method="post"
+                      action="{% url 'auth_forum:delete_post' post.pk %}"
+                      class="forum-delete-form d-inline"
+                      data-deletes-thread="{{ post.is_first_post|yesno:'true,false' }}">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="btn btn-sm btn-outline-danger"
+                            data-bs-toggle="tooltip"
+                            title="{% if post.is_first_post %}{% translate 'Delete thread' %}{% else %}{% translate 'Delete post' %}{% endif %}">
+                        <i class="fas fa-trash fa-fw"></i>
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="forum-post-content">{{ post.content }}</div>
+    </div>
+</div>

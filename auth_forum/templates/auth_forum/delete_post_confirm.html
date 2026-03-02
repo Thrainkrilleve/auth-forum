@@ -1,0 +1,65 @@
+{% extends 'auth_forum/base.html' %}
+{% load i18n %}
+
+{% block forum_page_title %}{% translate "Confirm Delete" %}{% endblock %}
+
+{% block forum_content %}
+
+<div class="forum-page-header">
+    <h1 class="forum-page-title text-danger">
+        <i class="fas fa-exclamation-triangle fa-fw"></i>
+        {% if deletes_thread %}
+        {% translate "Delete Thread" %}
+        {% else %}
+        {% translate "Delete Post" %}
+        {% endif %}
+    </h1>
+</div>
+
+<div class="card border-danger">
+    <div class="card-header bg-danger text-white">
+        <i class="fas fa-trash fa-fw"></i>
+        {% translate "Are you sure?" %}
+    </div>
+    <div class="card-body">
+
+        {% if deletes_thread %}
+        <p class="mb-1">
+            {% translate "You are about to delete the <strong>entire thread</strong>:" %}
+        </p>
+        <p class="fw-bold ms-3">&ldquo;{{ post.thread.title }}&rdquo;</p>
+        <p class="text-danger">
+            <i class="fas fa-exclamation-circle fa-fw"></i>
+            {% translate "All posts in this thread will be permanently deleted. This action cannot be undone." %}
+        </p>
+        {% else %}
+        <p class="mb-1">{% translate "You are about to delete this post from:" %}</p>
+        <p class="fw-bold ms-3">&ldquo;{{ post.thread.title }}&rdquo;</p>
+        <p class="text-muted" style="font-size:0.88rem; border:1px solid var(--forum-border); border-radius:6px; padding:0.75rem;">
+            {{ post.content|truncatechars:300 }}
+        </p>
+        {% endif %}
+
+        <div class="d-flex gap-2 mt-3">
+            <form method="post" action="">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash fa-fw"></i>
+                    {% if deletes_thread %}
+                    {% translate "Yes, delete thread" %}
+                    {% else %}
+                    {% translate "Yes, delete post" %}
+                    {% endif %}
+                </button>
+            </form>
+            <a href="{% url 'auth_forum:thread' post.thread.pk %}"
+               class="btn btn-outline-secondary">
+                <i class="fas fa-times fa-fw"></i>
+                {% translate "Cancel" %}
+            </a>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

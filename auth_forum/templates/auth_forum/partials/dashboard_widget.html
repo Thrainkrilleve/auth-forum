@@ -1,0 +1,25 @@
+{% load i18n %}
+<div class="card forum-dashboard-widget mb-3">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="fas fa-comments fa-fw me-1"></i> {% translate "Forum — Recent Activity" %}</span>
+        <a href="{% url 'auth_forum:index' %}" class="btn btn-sm btn-outline-primary">
+            {% translate "Go to Forum" %}
+        </a>
+    </div>
+    <div class="card-body p-2">
+        {% if recent_threads %}
+        {% for t in recent_threads %}
+        <div class="forum-widget-thread">
+            <a href="{% url 'auth_forum:thread' t.pk %}" title="{{ t.title }}">
+                {% if t.is_pinned %}<i class="fas fa-thumbtack fa-fw" style="color: var(--forum-gold); font-size:0.7em;"></i>{% endif %}
+                {% if t.is_locked %}<i class="fas fa-lock fa-fw text-muted" style="font-size:0.7em;"></i>{% endif %}
+                {{ t.title }}
+            </a>
+            <span class="forum-widget-meta">{{ t.board.name }} &middot; {{ t.updated_at|timesince }}{% translate " ago" %}</span>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="text-muted small mb-0 p-2">{% translate "No threads yet." %}</p>
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,100 @@
+{% extends 'auth_forum/base.html' %}
+{% load i18n static %}
+
+{% block forum_page_title %}{% translate "New Thread" %} — {{ board.name }}{% endblock %}
+
+{% block forum_content %}
+
+{# Breadcrumb #}
+<nav class="forum-breadcrumb">
+    <a href="{% url 'auth_forum:index' %}"><i class="fas fa-home fa-fw"></i> {% translate "Forum" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'auth_forum:board' board.slug %}">{{ board.name }}</a>
+    <span class="separator">/</span>
+    <strong>{% translate "New Thread" %}</strong>
+</nav>
+
+<div class="forum-page-header">
+    <h1 class="forum-page-title">
+        <i class="fas fa-plus-circle fa-fw"></i>
+        {% translate "New Thread" %}
+        <small class="text-muted fw-normal" style="font-size:0.75em;">
+            {% translate "in" %} {{ board.name }}
+        </small>
+    </h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+
+            {# Thread Title #}
+            <div class="mb-3">
+                <label for="id_title" class="form-label fw-semibold">
+                    {% translate "Thread Title" %} <span class="text-danger">*</span>
+                </label>
+                <input type="text"
+                       id="id_title"
+                       name="title"
+                       class="form-control"
+                       placeholder="{% translate 'Enter a clear, descriptive title…' %}"
+                       maxlength="255"
+                       value="{{ title|default:'' }}"
+                       required
+                       autofocus>
+            </div>
+
+            {# Opening post content #}
+            <div class="mb-3">
+                <label for="id_content" class="form-label fw-semibold">
+                    {% translate "Content" %} <span class="text-danger">*</span>
+                </label>
+                <div class="forum-editor-wrap">
+                    <div class="forum-editor-toolbar">
+                        <button type="button" class="btn-editor"
+                                data-wrap-before="**" data-wrap-after="**"
+                                title="{% translate 'Bold' %}">
+                            <i class="fas fa-bold"></i>
+                        </button>
+                        <button type="button" class="btn-editor"
+                                data-wrap-before="_" data-wrap-after="_"
+                                title="{% translate 'Italic' %}">
+                            <i class="fas fa-italic"></i>
+                        </button>
+                        <button type="button" class="btn-editor"
+                                data-wrap-before="`" data-wrap-after="`"
+                                title="{% translate 'Code' %}">
+                            <i class="fas fa-code"></i>
+                        </button>
+                        <button type="button" class="btn-editor"
+                                data-wrap-before="[quote]&#10;" data-wrap-after="&#10;[/quote]"
+                                title="{% translate 'Quote' %}">
+                            <i class="fas fa-quote-left"></i>
+                        </button>
+                    </div>
+                    <textarea id="id_content"
+                              name="content"
+                              class="forum-reply-textarea with-toolbar"
+                              placeholder="{% translate 'Write the opening post for your thread…' %}"
+                              data-max-length="10000"
+                              required>{{ content|default:'' }}</textarea>
+                </div>
+                <div class="forum-char-counter">10000 {% translate "characters remaining" %}</div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-plus fa-fw"></i>
+                    {% translate "Create Thread" %}
+                </button>
+                <a href="{% url 'auth_forum:board' board.slug %}"
+                   class="btn btn-outline-secondary">
+                    {% translate "Cancel" %}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

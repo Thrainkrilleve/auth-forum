@@ -1,0 +1,10 @@
+# Ensure all non-Python package files are included in source distributions.
+# The pre-built migrations mean users never need to run makemigrations.
+
+recursive-include auth_forum/migrations *.py
+recursive-include auth_forum/templates *.html
+recursive-include auth_forum/static *
+recursive-include auth_forum/locale *
+include CHANGELOG.md
+include LICENSE
+include README.md

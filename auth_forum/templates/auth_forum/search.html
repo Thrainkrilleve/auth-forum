@@ -1,0 +1,104 @@
+{% extends 'auth_forum/base.html' %}
+{% load i18n static %}
+
+{% block forum_page_title %}{% translate "Search" %}{% endblock %}
+
+{% block forum_content %}
+
+{# Breadcrumb #}
+<nav class="forum-breadcrumb">
+    <a href="{% url 'auth_forum:index' %}"><i class="fas fa-home fa-fw"></i> {% translate "Forum" %}</a>
+    <span class="separator">/</span>
+    <strong>{% translate "Search" %}</strong>
+</nav>
+
+<div class="forum-page-header">
+    <h1 class="forum-page-title">
+        <i class="fas fa-search fa-fw"></i>
+        {% translate "Search Posts" %}
+    </h1>
+</div>
+
+{# Search bar #}
+<form method="get" action="{% url 'auth_forum:search' %}"
+      class="forum-search-form"
+      data-search-min-length="{{ min_length }}">
+    <div class="forum-search-bar">
+        <input type="text"
+               name="q"
+               class="forum-search-input"
+               value="{{ query|default:'' }}"
+               placeholder="{% translate 'Search posts…' %}"
+               autofocus
+               autocomplete="off">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-search fa-fw"></i>
+            {% translate "Search" %}
+        </button>
+        {% if query %}
+        <a href="{% url 'auth_forum:search' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-times fa-fw"></i>
+        </a>
+        {% endif %}
+    </div>
+</form>
+
+{# Results #}
+{% if query %}
+
+{% if too_short %}
+<div class="alert alert-warning">
+    <i class="fas fa-exclamation-triangle fa-fw"></i>
+    {% blocktranslate with n=min_length %}
+    Search term must be at least {{ n }} characters.
+    {% endblocktranslate %}
+</div>
+
+{% elif results %}
+<p class="text-muted mb-3" style="font-size:0.85rem;">
+    {% blocktranslate with q=query count n=results|length %}
+    {{ n }} result for &ldquo;{{ q }}&rdquo;
+    {% plural %}
+    {{ n }} results for &ldquo;{{ q }}&rdquo;
+    {% endblocktranslate %}
+    <small>({% translate "showing top 50" %})</small>
+</p>
+
+{% for post in results %}
+<div class="forum-search-result">
+    <a href="{% url 'auth_forum:thread' post.thread.pk %}#post-{{ post.pk }}"
+       class="forum-search-result-title">
+        {{ post.thread.title }}
+    </a>
+    <div class="forum-search-result-meta">
+        <i class="fas fa-folder fa-fw"></i> {{ post.thread.board.name }}
+        &nbsp;·&nbsp;
+        <i class="fas fa-user fa-fw"></i>
+        {% if post.author %}{{ post.author.username }}{% else %}{% translate "deleted" %}{% endif %}
+        &nbsp;·&nbsp;
+        <i class="fas fa-clock fa-fw"></i> {{ post.created_at|timesince }}{% translate " ago" %}
+    </div>
+    <div class="forum-search-result-snippet">
+        {{ post.content|truncatechars:300 }}
+    </div>
+</div>
+{% endfor %}
+
+{% else %}
+<div class="card">
+    <div class="card-body text-center text-muted py-4">
+        <i class="fas fa-search fa-3x mb-3 d-block opacity-25"></i>
+        {% blocktranslate with q=query %}
+        No results found for &ldquo;{{ q }}&rdquo;.
+        {% endblocktranslate %}
+    </div>
+</div>
+{% endif %}
+
+{% endif %}
+
+{% endblock %}
+
+{% block forum_extra_js %}
+<script src="{% static 'auth_forum/js/search.js' %}"></script>
+{% endblock %}
