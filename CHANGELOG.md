@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-03-01
+
+### Added
+- Image embedding support via `[img]https://...[/img]` tag — renders a responsive `<img>` element in posts
+- New `templatetags/forum_tags.py` with `forum_render` filter that converts forum markup to safe HTML (XSS-safe via html.escape + allowlist)
+- All formatting tags now rendered on display: `[img]`, `[quote]`, `[quote=Author]`, `**bold**`, `_italic_`, `` `code` ``
+- Image toolbar button (\U0001f5bc) added to all three editor toolbars (reply, new thread, edit post)
+
+### Fixed
+- Post content no longer uses `white-space: pre-wrap` — line breaks now rendered as `<br>` tags via the filter
+
 ## [0.2.4] - 2026-03-01
 
 ### Added

@@ -1,4 +1,4 @@
-{% load i18n static %}
+{% load i18n static forum_tags %}
 {# Reusable post card. Requires: post (Post), can_moderate (bool), thread (Thread) #}
 <div class="forum-post-card{% if post.is_first_post %} forum-post-card--first{% endif %}" id="post-{{ post.pk }}">
 
@@ -78,6 +78,6 @@
             </div>
         </div>
 
-        <div class="forum-post-content">{{ post.content }}</div>
+        <div class="forum-post-content">{{ post.content|forum_render }}</div>
     </div>
 </div>
