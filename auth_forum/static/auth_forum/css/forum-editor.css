@@ -10,7 +10,7 @@
     flex-wrap: wrap;
     gap: 4px;
     padding: 6px 10px;
-    background-color: var(--forum-surface-alt);
+    background-color: rgba(255,255,255,0.06);
     border: 1px solid var(--forum-border);
     border-bottom: none;
     border-radius: 6px 6px 0 0;
@@ -20,7 +20,7 @@
     padding: 2px 8px;
     font-size: 0.8rem;
     border: 1px solid var(--forum-border);
-    background-color: var(--forum-surface);
+    background-color: transparent;
     color: var(--forum-text);
     border-radius: 4px;
     cursor: pointer;
@@ -47,7 +47,7 @@
     border-radius: 6px;
     padding: 0.75rem 1rem;
     min-height: 120px;
-    background-color: var(--forum-surface-alt);
+    background-color: rgba(255,255,255,0.06);
     font-size: 0.93rem;
     line-height: 1.7;
     white-space: pre-wrap;

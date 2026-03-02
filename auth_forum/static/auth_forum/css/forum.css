@@ -4,7 +4,7 @@
  * Custom EVE-themed forum styles for Alliance Auth.
  * All colours are derived from Bootstrap 5 CSS custom properties so they
  * automatically adapt to the Darkly / Flatly / Materia theme selections.
- * Zero CDN references – fully GDPR compliant.
+ * Zero CDN references â€“ fully GDPR compliant.
  * -----------------------------------------------------------------------
  */
 
@@ -15,8 +15,8 @@
 :root {
     --forum-accent:          var(--bs-primary, #0d6efd);
     --forum-accent-rgb:      var(--bs-primary-rgb, 13, 110, 253);
-    --forum-surface:         var(--bs-body-bg, #222);
-    --forum-surface-alt:     var(--bs-secondary-bg, #2c3034);
+    --forum-surface:         transparent;
+    --forum-surface-alt:     rgba(255, 255, 255, 0.06);
     --forum-border:          var(--bs-border-color, #dee2e6);
     --forum-text:            var(--bs-body-color, #212529);
     --forum-text-muted:      var(--bs-secondary-color, #6c757d);
@@ -40,7 +40,7 @@
 }
 
 /* =========================================================================
-   3. Index — Category / Board Table
+   3. Index â€” Category / Board Table
    ========================================================================= */
 
 /* Override Bootstrap accordion CSS variables so the dark theme is respected */
@@ -109,7 +109,7 @@
     grid-template-columns: 2fr 1fr 1fr 2fr;
     gap: 0;
     padding: 0.4rem 1rem;
-    background-color: var(--forum-surface-alt);
+    background-color: rgba(255,255,255,0.06);
     border-bottom: 2px solid var(--forum-border);
     font-size: 0.75rem;
     font-weight: 700;
@@ -188,7 +188,7 @@
 }
 
 /* =========================================================================
-   5. Board View — Thread List
+   5. Board View â€” Thread List
    ========================================================================= */
 
 .forum-thread-table {
@@ -205,7 +205,7 @@
     color: var(--forum-text-muted);
     border-bottom: 2px solid var(--forum-border);
     padding: 0.6rem 1rem;
-    background-color: var(--forum-surface-alt);
+    background-color: rgba(255,255,255,0.06);
 }
 
 .forum-thread-row td {
@@ -261,7 +261,7 @@
     font-weight: 700;
     padding: 2px 7px;
     border-radius: 20px;
-    background-color: var(--forum-surface-alt);
+    background-color: rgba(255,255,255,0.06);
     color: var(--forum-locked);
     border: 1px solid var(--forum-border);
     white-space: nowrap;
@@ -269,7 +269,7 @@
 }
 
 /* =========================================================================
-   6. Thread View — Post Cards
+   6. Thread View â€” Post Cards
    ========================================================================= */
 
 .forum-post-card {
@@ -279,7 +279,7 @@
     border-radius: var(--forum-card-radius);
     overflow: hidden;
     margin-bottom: 1.25rem;
-    background-color: var(--forum-surface);
+    background-color: transparent;
     transition: box-shadow var(--forum-transition);
 }
 
@@ -297,7 +297,7 @@
     width: 110px;
     min-width: 110px;
     padding: 1rem 0.75rem;
-    background-color: var(--forum-surface-alt);
+    background-color: rgba(255,255,255,0.06);
     border-right: 1px solid var(--forum-border);
     display: flex;
     flex-direction: column;
@@ -328,7 +328,7 @@
     height: 20px;
     border-radius: 3px;
     border: 1px solid var(--forum-border);
-    background-color: var(--forum-surface);
+    background-color: transparent;
     object-fit: contain;
 }
 
@@ -398,7 +398,7 @@
     border-left: 3px solid var(--forum-accent);
     padding: 0.6rem 1rem 0.6rem 1rem;
     margin: 0.75rem 0;
-    background-color: var(--forum-surface-alt);
+    background-color: rgba(255,255,255,0.06);
     border-radius: 0 var(--forum-card-radius) var(--forum-card-radius) 0;
     font-size: 0.88rem;
     color: var(--forum-text-muted);
@@ -418,14 +418,14 @@
 .forum-reply-card {
     border: 1px solid var(--forum-border);
     border-radius: var(--forum-card-radius);
-    background-color: var(--forum-surface);
+    background-color: transparent;
     overflow: hidden;
     margin-top: 1.5rem;
 }
 
 .forum-reply-header {
     padding: 0.75rem 1.25rem;
-    background-color: var(--forum-surface-alt);
+    background-color: rgba(255,255,255,0.06);
     border-bottom: 1px solid var(--forum-border);
     font-weight: 600;
     font-size: 0.95rem;
@@ -442,7 +442,7 @@
     font-size: 0.93rem;
     border-radius: 6px;
     border: 1px solid var(--forum-border);
-    background-color: var(--forum-surface);
+    background-color: transparent;
     color: var(--forum-text);
     padding: 0.6rem 0.85rem;
     transition: border-color var(--forum-transition), box-shadow var(--forum-transition);
@@ -475,7 +475,7 @@
     align-items: center;
     gap: 10px;
     padding: 1rem 1.25rem;
-    background-color: var(--forum-surface-alt);
+    background-color: rgba(255,255,255,0.06);
     border: 1px solid var(--forum-border);
     border-radius: var(--forum-card-radius);
     color: var(--forum-text-muted);
@@ -524,7 +524,7 @@
     font-size: 0.95rem;
     border: 1px solid var(--forum-border);
     border-radius: 6px;
-    background-color: var(--forum-surface);
+    background-color: transparent;
     color: var(--forum-text);
     transition: border-color var(--forum-transition), box-shadow var(--forum-transition);
 }
@@ -540,7 +540,7 @@
     border-radius: var(--forum-card-radius);
     padding: 1rem 1.25rem;
     margin-bottom: 1rem;
-    background-color: var(--forum-surface);
+    background-color: transparent;
     transition: box-shadow var(--forum-transition);
 }
 

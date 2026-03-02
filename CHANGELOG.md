@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-03-01
+
+### Fixed
+- Replaced all theme-dependent CSS variable backgrounds (`--forum-surface`, `--forum-surface-alt`) with a theme-agnostic `rgba(255,255,255,0.06)` tint — fixes white/light headers on thread list, post sidebar, reply box, quote blocks across all Bootstrap 5 themes including Darkly
+
 ## [0.2.2] - 2026-03-01
 
 ### Fixed
