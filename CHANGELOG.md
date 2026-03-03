@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-03-03
+
+### Added
+- **Auto image loading** — bare image URLs (http/https ending in `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.svg`) pasted directly into a post are automatically rendered as inline images without needing `[img]` tags
+- **Giphy GIF picker** — new GIF button in all three editor toolbars (reply, new thread, edit post) opens a searchable Giphy modal; trending GIFs shown on open; click any GIF to insert it directly into the post
+- `AUTH_FORUM_GIPHY_API_KEY` setting in `app_settings.py`
+
 ## [0.3.0] - 2026-03-01
 
 ### Added

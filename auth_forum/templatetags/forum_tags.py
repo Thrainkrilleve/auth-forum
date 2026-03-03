@@ -24,7 +24,11 @@ _IMG_URL_RE = re.compile(
     r"https?://[^\s<>\"'\]\[]{3,2000}",
     re.IGNORECASE,
 )
-
+# A line containing only an image URL (auto-renders without [img] tags)
+_BARE_IMG_LINE_RE = re.compile(
+    r"(?m)^[ \t]*(https?://[^\s<>"'\]\[]{3,2000}\.(?:jpe?g|png|gif|webp|svg)(?:\?[^\s<>"'\]\[]*)?)[ \t]*$",
+    re.IGNORECASE,
+)
 
 def _safe_img(url: str) -> str:
     """Return a safe <img> tag if *url* looks like a real http(s) URL."""
@@ -97,6 +101,14 @@ def _extract_blocks(text: str) -> tuple:
         flags=re.IGNORECASE | re.DOTALL,
     )
 
+    # Bare image URLs — a line containing only an image URL, no [img] tags needed
+    def _sub_bare_img(m):
+        key = f"\x00BLOCK-{uuid.uuid4().hex}\x00"
+        mapping[key] = _safe_img(m.group(1).strip())
+        return f"\n\n{key}\n\n"
+
+    text = _BARE_IMG_LINE_RE.sub(_sub_bare_img, text)
+
     return text, mapping
 
 
@@ -132,7 +144,21 @@ else:
         """Minimal forum markup renderer (mistune not installed)."""
         if not value:
             return ""
-        text = html.escape(str(value))
+        # Extract bare image URLs before html.escape to avoid double-escaping
+        _bare_imgs: dict = {}
+        _counter = [0]
+
+        def _bare_sub(m):
+            ph = f"@@FORUMIMG{_counter[0]}@@"
+            _bare_imgs[ph] = _safe_img(m.group(1).strip())
+            _counter[0] += 1
+            return "\n" + ph + "\n"
+
+        raw = _BARE_IMG_LINE_RE.sub(_bare_sub, str(value))
+        text = html.escape(raw)
+        # Restore bare images
+        for _ph, _img_html in _bare_imgs.items():
+            text = text.replace(_ph, _img_html)
         text = re.sub(
             r"\[img\](.*?)\[/img\]",
             lambda m: _safe_img(m.group(1)),
@@ -176,3 +202,10 @@ def dict_get(d, key):
     if d is None:
         return 0
     return d.get(key, 0)
+
+
+@register.simple_tag
+def giphy_api_key():
+    """Output the configured Giphy API key for use in templates."""
+    from auth_forum.app_settings import AUTH_FORUM_GIPHY_API_KEY
+    return AUTH_FORUM_GIPHY_API_KEY

@@ -17,3 +17,6 @@ AUTH_FORUM_NOTIFY_REACTIONS = getattr(settings, "AUTH_FORUM_NOTIFY_REACTIONS", T
 
 # Optional: Discord channel ID to post new thread announcements to (requires aadiscordbot)
 AUTH_FORUM_DISCORD_CHANNEL_ID = getattr(settings, "AUTH_FORUM_DISCORD_CHANNEL_ID", None)
+
+# Giphy API key for the GIF picker in the post editor
+AUTH_FORUM_GIPHY_API_KEY = getattr(settings, "AUTH_FORUM_GIPHY_API_KEY", "lyLrhIGwjOxCC9KdPgizXFQY1x3KsfJy")

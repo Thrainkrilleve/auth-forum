@@ -184,6 +184,112 @@
     }
 
     /* ===================================================================
+       9. Giphy GIF Picker
+       =================================================================== */
+
+    function initGiphyPicker() {
+        var apiKey = window.FORUM_GIPHY_KEY;
+        var modal = document.getElementById("forum-giphy-modal");
+        if (!modal || !apiKey) return;
+
+        var searchInput = modal.querySelector(".forum-giphy-search");
+        var grid = modal.querySelector(".forum-giphy-grid");
+        var closeBtn = modal.querySelector(".forum-giphy-close");
+        var activeTa = null;
+        var debounceTimer = null;
+
+        // Open picker when any GIF toolbar button is clicked
+        document.addEventListener("click", function (e) {
+            var btn = e.target.closest(".btn-editor-gif");
+            if (!btn) return;
+            var wrap = btn.closest(".forum-editor-wrap");
+            activeTa = wrap
+                ? wrap.querySelector(".forum-reply-textarea")
+                : document.querySelector(".forum-reply-textarea");
+            modal.classList.add("visible");
+            searchInput.value = "";
+            grid.innerHTML = "";
+            setTimeout(function () { searchInput.focus(); }, 50);
+            searchGiphy("trending");
+        });
+
+        // Close on backdrop click
+        modal.addEventListener("click", function (e) {
+            if (e.target === modal) closeModal();
+        });
+
+        // Close on button click
+        closeBtn.addEventListener("click", closeModal);
+
+        // Close on Escape
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape" && modal.classList.contains("visible")) closeModal();
+        });
+
+        function closeModal() {
+            modal.classList.remove("visible");
+            activeTa = null;
+        }
+
+        // Search with debounce
+        searchInput.addEventListener("input", function () {
+            clearTimeout(debounceTimer);
+            var q = searchInput.value.trim();
+            if (!q) return;
+            debounceTimer = setTimeout(function () { searchGiphy(q); }, 400);
+        });
+
+        function searchGiphy(q) {
+            grid.innerHTML = '<div class="forum-giphy-loading"><i class="fas fa-spinner fa-spin fa-lg"></i></div>';
+            var endpoint = q === "trending"
+                ? "https://api.giphy.com/v1/gifs/trending?api_key=" + encodeURIComponent(apiKey) + "&limit=12&rating=g"
+                : "https://api.giphy.com/v1/gifs/search?api_key=" + encodeURIComponent(apiKey) + "&q=" + encodeURIComponent(q) + "&limit=12&rating=g&lang=en";
+            fetch(endpoint)
+                .then(function (r) { return r.json(); })
+                .then(function (data) { renderResults(data.data || []); })
+                .catch(function () {
+                    grid.innerHTML = '<p class="forum-giphy-error">Could not load GIFs.</p>';
+                });
+        }
+
+        function renderResults(gifs) {
+            grid.innerHTML = "";
+            if (!gifs.length) {
+                grid.innerHTML = '<p class="forum-giphy-error">No results found.</p>';
+                return;
+            }
+            gifs.forEach(function (gif) {
+                var images = gif.images || {};
+                var previewUrl = (images.fixed_height_small && images.fixed_height_small.url)
+                    || (images.fixed_height && images.fixed_height.url)
+                    || "";
+                var insertUrl = (images.fixed_height && images.fixed_height.url)
+                    || (images.original && images.original.url)
+                    || "";
+                if (!previewUrl || !insertUrl) return;
+
+                var img = document.createElement("img");
+                img.src = previewUrl;
+                img.className = "forum-giphy-item";
+                img.title = gif.title || "GIF";
+                img.loading = "lazy";
+                img.addEventListener("click", function () {
+                    if (!activeTa) return;
+                    // Insert the URL as a bare image URL on its own line (auto-renders)
+                    var insert = "\n" + insertUrl + "\n";
+                    var pos = activeTa.selectionStart !== undefined ? activeTa.selectionStart : activeTa.value.length;
+                    activeTa.value = activeTa.value.substring(0, pos) + insert + activeTa.value.substring(pos);
+                    activeTa.focus();
+                    activeTa.setSelectionRange(pos + insert.length, pos + insert.length);
+                    activeTa.dispatchEvent(new Event("input")); // trigger char counter + auto-expand
+                    closeModal();
+                });
+                grid.appendChild(img);
+            });
+        }
+    }
+
+    /* ===================================================================
        DOM Ready
        =================================================================== */
 
@@ -194,6 +300,7 @@
         initAutoExpand();
         initTooltips();
         initDeleteConfirm();
+        initGiphyPicker();
     });
 
 })();
