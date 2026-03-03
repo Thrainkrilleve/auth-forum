@@ -26,7 +26,7 @@ _IMG_URL_RE = re.compile(
 )
 # A line containing only an image URL (auto-renders without [img] tags)
 _BARE_IMG_LINE_RE = re.compile(
-    r"(?m)^[ \t]*(https?://[^\s<>"'\]\[]{3,2000}\.(?:jpe?g|png|gif|webp|svg)(?:\?[^\s<>"'\]\[]*)?)[ \t]*$",
+    r"""(?m)^[ \t]*(https?://[^\s<>"'\]\[]{3,2000}\.(?:jpe?g|png|gif|webp|svg)(?:\?[^\s<>"'\]\[]*)?)[ \t]*$""",
     re.IGNORECASE,
 )
 
