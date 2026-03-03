@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-03-03
+
+### Fixed
+- `SyntaxError` in `forum_tags.py` — `_BARE_IMG_LINE_RE` regex used a single-quoted raw string containing a literal `"` inside a character class, which terminated the string early and crashed celery/beat worker startup; switched to triple-quoted raw string
+
 ## [0.5.0] - 2026-03-04
 
 ### Added
