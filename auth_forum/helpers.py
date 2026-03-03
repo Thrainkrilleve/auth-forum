@@ -5,11 +5,15 @@ Kept separate from views so they can be called from tasks and tests without
 importing the full Django request cycle.
 """
 
+import re
+
 from django.apps import apps
 from django.contrib.auth.models import User
 from django.db.models import QuerySet, Prefetch
 
 from .models import Board, Thread, Post, UserReadStatus
+
+_MENTION_RE = re.compile(r"@(\w{1,150})")
 
 
 # ---------------------------------------------------------------------------
@@ -164,3 +168,32 @@ def get_thread_subscribers(thread: Thread, exclude_user=None) -> QuerySet:
 def discord_bot_active() -> bool:
     """Return True if allianceauth-discordbot is installed in this project."""
     return apps.is_installed("aadiscordbot")
+
+
+# ---------------------------------------------------------------------------
+# @mention extraction
+# ---------------------------------------------------------------------------
+
+
+def extract_mentions(text: str) -> set:
+    """
+    Extract a set of (lowercase) usernames mentioned with @ in post content.
+    Example: 'Hey @Alice and @Bob' → {'alice', 'bob'} (case-folded for lookup).
+    """
+    return {name.lower() for name in _MENTION_RE.findall(text)}
+
+
+# ---------------------------------------------------------------------------
+# Board subscriptions
+# ---------------------------------------------------------------------------
+
+
+def get_board_subscribers(board: Board, exclude_user=None) -> QuerySet:
+    """Return queryset of Users subscribed to *board*, optionally excluding *exclude_user*."""
+    from .models import BoardSubscription
+
+    qs = BoardSubscription.objects.filter(board=board).values_list("user_id", flat=True)
+    subscriber_ids = set(qs)
+    if exclude_user:
+        subscriber_ids.discard(exclude_user.pk)
+    return User.objects.filter(pk__in=subscriber_ids)

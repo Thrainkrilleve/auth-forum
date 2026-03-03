@@ -27,6 +27,9 @@
             <i class="fas fa-thumbtack fa-fw"></i> {% translate "Pinned" %}
         </span>
         {% endif %}
+        {% if thread.prefix %}
+        <span class="forum-prefix forum-prefix-{{ thread.prefix }}">{{ thread.get_prefix_display }}</span>
+        {% endif %}
         {{ thread.title }}
     </h1>
     <div class="d-flex align-items-center gap-2">
@@ -68,6 +71,10 @@
             {% if thread.is_pinned %}{% translate "Unpin" %}{% else %}{% translate "Pin" %}{% endif %}
         </button>
     </form>
+
+    <a href="{% url 'auth_forum:move_thread' thread.pk %}" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrows-alt fa-fw"></i> {% translate "Move" %}
+    </a>
 </div>
 {% endif %}
 
@@ -160,7 +167,21 @@
                             title="{% translate 'Insert GIF from GIPHY' %}">
                         <i class="fas fa-film fa-fw"></i> GIF
                     </button>
+                    <button type="button" class="btn-editor btn-editor-emoji"
+                            title="{% translate 'Emoji' %}">
+                        <i class="fas fa-smile fa-fw"></i>
+                    </button>
+                    <button type="button" class="btn-editor"
+                            data-wrap-before="[spoiler]" data-wrap-after="[/spoiler]"
+                            title="{% translate 'Spoiler' %}">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                    <button type="button" class="btn-editor btn-editor-preview"
+                            title="{% translate 'Preview' %}">
+                        <i class="fas fa-eye fa-fw"></i> {% translate "Preview" %}
+                    </button>
                 </div>
+                <div class="forum-editor-preview d-none"></div>
                 <textarea name="content"
                           class="forum-reply-textarea with-toolbar"
                           placeholder="{% translate 'Write your reply here…' %}"

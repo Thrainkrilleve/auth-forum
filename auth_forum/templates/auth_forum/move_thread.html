@@ -1,0 +1,70 @@
+{% extends 'auth_forum/base.html' %}
+{% load i18n static %}
+
+{% block forum_page_title %}{% translate "Move Thread" %}{% endblock %}
+
+{% block forum_content %}
+
+<nav class="forum-breadcrumb">
+    <a href="{% url 'auth_forum:index' %}"><i class="fas fa-home fa-fw"></i> {% translate "Forum" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'auth_forum:board' thread.board.slug %}">{{ thread.board.name }}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'auth_forum:thread' thread.pk %}">{{ thread.title|truncatechars:50 }}</a>
+    <span class="separator">/</span>
+    <strong>{% translate "Move Thread" %}</strong>
+</nav>
+
+<div class="forum-page-header">
+    <h1 class="forum-page-title" style="font-size:1.1rem;">
+        <i class="fas fa-arrows-alt fa-fw"></i> {% translate "Move Thread" %}
+    </h1>
+</div>
+
+<div class="forum-card" style="max-width:520px;">
+    <div class="forum-card-header">{{ thread.title|truncatechars:60 }}</div>
+    <div class="forum-card-body">
+        <p class="text-muted mb-3" style="font-size:0.88rem;">
+            {% translate "Select the target board. A notice will be left in the original board if you check the option below." %}
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="target_board">{% translate "Move to board" %}</label>
+                <select name="target_board" id="target_board" class="form-select form-select-sm" required>
+                    <option value="">— {% translate "Select a board" %} —</option>
+                    {% for cat, boards in boards_by_category.items %}
+                    <optgroup label="{{ cat }}">
+                        {% for board in boards %}
+                        {% if board.pk != thread.board.pk %}
+                        <option value="{{ board.pk }}">{{ board.name }}</option>
+                        {% else %}
+                        <option value="{{ board.pk }}" disabled>{{ board.name }} ({% translate "current" %})</option>
+                        {% endif %}
+                        {% endfor %}
+                    </optgroup>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-check mb-4">
+                <input class="form-check-input" type="checkbox" name="leave_redirect" id="leave_redirect" checked>
+                <label class="form-check-label" for="leave_redirect" style="font-size:0.88rem;">
+                    {% translate "Notify readers in original board (stub thread)" %}
+                </label>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fas fa-arrows-alt fa-fw"></i> {% translate "Move" %}
+                </button>
+                <a href="{% url 'auth_forum:thread' thread.pk %}" class="btn btn-outline-secondary btn-sm">
+                    {% translate "Cancel" %}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

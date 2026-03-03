@@ -62,6 +62,14 @@
                    title="{% translate 'Edit post' %}">
                     <i class="fas fa-pen fa-fw"></i>
                 </a>
+                {% if post.updated_at != post.created_at %}
+                <a href="{% url 'auth_forum:post_history' post.pk %}"
+                   class="btn btn-sm btn-outline-secondary"
+                   data-bs-toggle="tooltip"
+                   title="{% translate 'Edit history' %}">
+                    <i class="fas fa-history fa-fw"></i>
+                </a>
+                {% endif %}
                 <form method="post"
                       action="{% url 'auth_forum:delete_post' post.pk %}"
                       class="forum-delete-form d-inline"

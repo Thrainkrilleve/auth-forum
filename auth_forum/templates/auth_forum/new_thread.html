@@ -45,6 +45,21 @@
                        autofocus>
             </div>
 
+            {# Thread Prefix / Flair #}
+            <div class="mb-3">
+                <label for="id_prefix" class="form-label fw-semibold">
+                    {% translate "Thread Prefix" %} <span class="text-muted fw-normal">({% translate "optional" %})</span>
+                </label>
+                <select id="id_prefix" name="prefix" class="form-select form-select-sm" style="max-width:220px;">
+                    <option value="">— {% translate "None" %} —</option>
+                    <option value="question">{% translate "Question" %}</option>
+                    <option value="guide">{% translate "Guide" %}</option>
+                    <option value="answered">{% translate "Answered" %}</option>
+                    <option value="announcement">{% translate "Announcement" %}</option>
+                    <option value="discussion">{% translate "Discussion" %}</option>
+                </select>
+            </div>
+
             {# Opening post content #}
             <div class="mb-3">
                 <label for="id_content" class="form-label fw-semibold">
@@ -81,7 +96,21 @@
                                 title="{% translate 'Insert GIF from GIPHY' %}">
                             <i class="fas fa-film fa-fw"></i> GIF
                         </button>
+                        <button type="button" class="btn-editor btn-editor-emoji"
+                                title="{% translate 'Emoji' %}">
+                            <i class="fas fa-smile fa-fw"></i>
+                        </button>
+                        <button type="button" class="btn-editor"
+                                data-wrap-before="[spoiler]" data-wrap-after="[/spoiler]"
+                                title="{% translate 'Spoiler' %}">
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
+                        <button type="button" class="btn-editor btn-editor-preview"
+                                title="{% translate 'Preview' %}">
+                            <i class="fas fa-eye fa-fw"></i> {% translate "Preview" %}
+                        </button>
                     </div>
+                    <div class="forum-editor-preview d-none"></div>
                     <textarea id="id_content"
                               name="content"
                               class="forum-reply-textarea with-toolbar"

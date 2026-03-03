@@ -20,3 +20,14 @@ AUTH_FORUM_DISCORD_CHANNEL_ID = getattr(settings, "AUTH_FORUM_DISCORD_CHANNEL_ID
 
 # Giphy API key for the GIF picker in the post editor
 AUTH_FORUM_GIPHY_API_KEY = getattr(settings, "AUTH_FORUM_GIPHY_API_KEY", "lyLrhIGwjOxCC9KdPgizXFQY1x3KsfJy")
+
+# Image paste/drag upload — disabled by default; set MEDIA_ROOT + MEDIA_URL in Django settings
+AUTH_FORUM_UPLOAD_ENABLED = getattr(settings, "AUTH_FORUM_UPLOAD_ENABLED", False)
+# Maximum upload size in bytes (default 5 MB)
+AUTH_FORUM_UPLOAD_MAX_SIZE = getattr(settings, "AUTH_FORUM_UPLOAD_MAX_SIZE", 5 * 1024 * 1024)
+
+# Notify users when they are @mentioned in a post
+AUTH_FORUM_NOTIFY_MENTIONS = getattr(settings, "AUTH_FORUM_NOTIFY_MENTIONS", True)
+
+# Notify board subscribers when a new thread is created
+AUTH_FORUM_NOTIFY_BOARD_SUBSCRIBERS = getattr(settings, "AUTH_FORUM_NOTIFY_BOARD_SUBSCRIBERS", True)

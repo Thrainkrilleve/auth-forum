@@ -108,12 +108,40 @@ class Board(models.Model):
 class Thread(models.Model):
     """A discussion thread within a board."""
 
+    PREFIX_NONE = ""
+    PREFIX_QUESTION = "question"
+    PREFIX_GUIDE = "guide"
+    PREFIX_ANSWERED = "answered"
+    PREFIX_ANNOUNCEMENT = "announcement"
+    PREFIX_DISCUSSION = "discussion"
+    PREFIX_CHOICES = [
+        (PREFIX_NONE, ""),
+        (PREFIX_QUESTION, "Question"),
+        (PREFIX_GUIDE, "Guide"),
+        (PREFIX_ANSWERED, "Answered"),
+        (PREFIX_ANNOUNCEMENT, "Announcement"),
+        (PREFIX_DISCUSSION, "Discussion"),
+    ]
+    # Prefix badge colours (CSS class suffix)
+    PREFIX_COLOURS = {
+        PREFIX_QUESTION: "info",
+        PREFIX_GUIDE: "success",
+        PREFIX_ANSWERED: "success",
+        PREFIX_ANNOUNCEMENT: "danger",
+        PREFIX_DISCUSSION: "secondary",
+    }
+
     board = models.ForeignKey(Board, on_delete=models.CASCADE, related_name="threads")
     author = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, related_name="forum_threads"
     )
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=280, unique=True, blank=True)
+    prefix = models.CharField(
+        max_length=20, blank=True, default="",
+        choices=PREFIX_CHOICES,
+        help_text=_("Optional flair prefix shown before the thread title."),
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_locked = models.BooleanField(default=False)
@@ -150,6 +178,10 @@ class Thread(models.Model):
     @property
     def first_post(self):
         return self.posts.order_by("created_at").first()
+
+    @property
+    def prefix_colour(self) -> str:
+        return self.PREFIX_COLOURS.get(self.prefix, "secondary")
 
 
 class Post(models.Model):
@@ -308,3 +340,37 @@ class PollVote(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user.username} voted '{self.option.text}'"
+
+
+class PostEdit(models.Model):
+    """Saved snapshot of a post's content before an edit."""
+
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="edits")
+    editor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="forum_edits")
+    old_content = models.TextField()
+    edited_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-edited_at"]
+        verbose_name = "Post Edit"
+        verbose_name_plural = "Post Edits"
+
+    def __str__(self) -> str:
+        editor_name = self.editor.username if self.editor else "unknown"
+        return f"Edit of post #{self.post_id} by {editor_name}"
+
+
+class BoardSubscription(models.Model):
+    """User subscription to a board — notified when new threads are posted."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="forum_board_subscriptions")
+    board = models.ForeignKey(Board, on_delete=models.CASCADE, related_name="subscriptions")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "board")
+        verbose_name = "Board Subscription"
+        verbose_name_plural = "Board Subscriptions"
+
+    def __str__(self) -> str:
+        return f"{self.user.username} subscribed to board '{self.board.name}'"

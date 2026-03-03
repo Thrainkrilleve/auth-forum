@@ -3,6 +3,8 @@ Celery tasks for auth_forum.
 
 - notify_subscribers_task: fires Alliance Auth bell notifications to thread subscribers.
 - notify_reaction_task: fires AA bell notification to post author when someone reacts.
+- notify_mention_task: fires AA bell notifications to users @mentioned in a post.
+- notify_board_subscribers_task: fires AA bell notifications to board subscribers on new thread.
 - discord_post_notification_task: optionally sends a Discord embed (requires aadiscordbot).
 """
 
@@ -13,6 +15,8 @@ from .app_settings import (
     AUTH_FORUM_NOTIFY_REPLIES,
     AUTH_FORUM_NOTIFY_REACTIONS,
     AUTH_FORUM_DISCORD_CHANNEL_ID,
+    AUTH_FORUM_NOTIFY_MENTIONS,
+    AUTH_FORUM_NOTIFY_BOARD_SUBSCRIBERS,
 )
 from .helpers import discord_bot_active
 
@@ -159,4 +163,86 @@ def discord_post_notification_task(self, thread_pk: int, post_pk: int):
 
     except Exception as exc:
         logger.exception("discord_post_notification_task failed for post_pk=%d", post_pk)
+        raise self.retry(exc=exc)
+
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def notify_mention_task(self, post_pk: int, actor_pk: int):
+    """
+    Notify users who are @mentioned in a post.
+    """
+    if not AUTH_FORUM_NOTIFY_MENTIONS:
+        return
+
+    try:
+        from django.contrib.auth.models import User
+        from allianceauth.notifications import notify
+
+        from .models import Post
+        from .helpers import extract_mentions
+
+        post = Post.objects.select_related("thread", "author").get(pk=post_pk)
+        actor = User.objects.get(pk=actor_pk)
+        mentioned_names = extract_mentions(post.content)
+
+        for username_lower in mentioned_names:
+            try:
+                mentioned_user = User.objects.get(username__iexact=username_lower)
+            except User.DoesNotExist:
+                continue
+            # Don't notify yourself
+            if mentioned_user.pk == actor.pk:
+                continue
+            notify(
+                user=mentioned_user,
+                title=f"{actor.username} mentioned you",
+                message=(
+                    f'{actor.username} mentioned you in "{post.thread.title}" '
+                    f"in {post.thread.board.name}."
+                ),
+                level="info",
+            )
+
+        logger.debug("Processed mentions for post_pk=%d", post_pk)
+
+    except Exception as exc:
+        logger.exception("notify_mention_task failed for post_pk=%d", post_pk)
+        raise self.retry(exc=exc)
+
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def notify_board_subscribers_task(self, thread_pk: int):
+    """
+    Notify board subscribers when a new thread is created.
+    """
+    if not AUTH_FORUM_NOTIFY_BOARD_SUBSCRIBERS:
+        return
+
+    try:
+        from allianceauth.notifications import notify
+
+        from .models import Thread
+        from .helpers import get_board_subscribers
+
+        thread = Thread.objects.select_related("board", "author").get(pk=thread_pk)
+        subscribers = get_board_subscribers(thread.board, exclude_user=thread.author)
+        author_name = thread.author.username if thread.author else "Someone"
+
+        for user in subscribers:
+            notify(
+                user=user,
+                title=f"New thread in {thread.board.name}",
+                message=(
+                    f'"{thread.title}" was posted by {author_name} '
+                    f"in {thread.board.name}."
+                ),
+                level="info",
+            )
+
+        logger.debug(
+            "Notified %d board subscriber(s) for thread pk=%d", subscribers.count(), thread_pk
+        )
+
+    except Exception as exc:
+        logger.exception("notify_board_subscribers_task failed for thread_pk=%d", thread_pk)
         raise self.retry(exc=exc)

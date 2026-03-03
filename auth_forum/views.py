@@ -7,13 +7,19 @@ All views require:
   - Per-board user_can_access_board() check where needed
 """
 
+import os
+import uuid
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.utils.translation import gettext_lazy as _
 
@@ -21,6 +27,8 @@ from .app_settings import (
     AUTH_FORUM_POSTS_PER_PAGE,
     AUTH_FORUM_SEARCH_MIN_LENGTH,
     AUTH_FORUM_THREADS_PER_PAGE,
+    AUTH_FORUM_UPLOAD_ENABLED,
+    AUTH_FORUM_UPLOAD_MAX_SIZE,
 )
 from .helpers import (
     get_accessible_boards,
@@ -29,7 +37,10 @@ from .helpers import (
     user_can_access_board,
 )
 from .forms import BoardForm, CategoryForm
-from .models import Board, Category, Post, Thread, PostReaction, ThreadSubscription, Poll, PollOption, PollVote
+from .models import (
+    Board, BoardSubscription, Category, Post, PostEdit, Thread,
+    PostReaction, ThreadSubscription, Poll, PollOption, PollVote,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -154,6 +165,9 @@ def board(request, board_slug):
         "page_obj": page_obj,
         "unread_ids": unread_ids,
         "can_moderate": request.user.has_perm("auth_forum.manage_forum"),
+        "user_board_subscribed": BoardSubscription.objects.filter(
+            user=request.user, board=the_board
+        ).exists(),
     }
     return render(request, "auth_forum/board.html", context)
 
@@ -200,10 +214,11 @@ def thread(request, thread_pk):
                 the_thread.save(update_fields=["updated_at"])
 
             # Fire async tasks
-            from .tasks import notify_subscribers_task, discord_post_notification_task
+            from .tasks import notify_subscribers_task, discord_post_notification_task, notify_mention_task
 
             notify_subscribers_task.delay(the_thread.pk, new_post.pk, request.user.pk)
             discord_post_notification_task.delay(the_thread.pk, new_post.pk)
+            notify_mention_task.delay(new_post.pk, request.user.pk)
 
             mark_thread_read(request.user, the_thread)
             messages.success(request, _("Reply posted."))
@@ -265,6 +280,7 @@ def thread(request, thread_pk):
         "can_moderate": request.user.has_perm("auth_forum.manage_forum"),
         "can_reply": not the_thread.is_locked
         or request.user.has_perm("auth_forum.manage_forum"),
+        "user_subscribed": is_subscribed,
         "is_subscribed": is_subscribed,
         "poll": poll,
         "poll_options": poll_options,
@@ -317,6 +333,7 @@ def new_thread(request, board_slug):
                 board=the_board,
                 author=request.user,
                 title=title,
+                prefix=request.POST.get("prefix", "").strip(),
             )
             first_post = Post.objects.create(
                 thread=new_t,
@@ -346,9 +363,11 @@ def new_thread(request, board_slug):
             for i, opt_text in enumerate(poll_options_clean[:10]):
                 PollOption.objects.create(poll=poll_obj, text=opt_text, order=i)
 
-        from .tasks import discord_post_notification_task
+        from .tasks import discord_post_notification_task, notify_mention_task, notify_board_subscribers_task
 
         discord_post_notification_task.delay(new_t.pk, first_post.pk)
+        notify_mention_task.delay(first_post.pk, request.user.pk)
+        notify_board_subscribers_task.delay(new_t.pk)
         mark_thread_read(request.user, new_t)
         messages.success(request, _("Thread created."))
         return redirect("auth_forum:thread", thread_pk=new_t.pk)
@@ -384,6 +403,8 @@ def edit_post(request, post_pk):
             messages.error(request, _("Post content cannot be empty."))
             return render(request, "auth_forum/edit_post.html", {"post": post})
 
+        # Save edit history before overwriting
+        PostEdit.objects.create(post=post, editor=request.user, old_content=post.content)
         post.content = content
         post.save(update_fields=["content", "updated_at"])
         messages.success(request, _("Post updated."))
@@ -484,30 +505,48 @@ def pin_thread(request, thread_pk):
 def search(request):
     """Full-text search across posts in boards the user can access."""
     query = request.GET.get("q", "").strip()
+    board_filter = request.GET.get("board", "").strip()
+    author_filter = request.GET.get("author", "").strip()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
     results = []
     too_short = False
+
+    accessible_boards = get_accessible_boards(request.user)
+    accessible_board_ids = [b.id for b in accessible_boards]
 
     if query:
         if len(query) < AUTH_FORUM_SEARCH_MIN_LENGTH:
             too_short = True
         else:
-            accessible_boards = get_accessible_boards(request.user)
-            accessible_board_ids = [b.id for b in accessible_boards]
-
-            results = (
+            qs = (
                 Post.objects.filter(
                     thread__board_id__in=accessible_board_ids,
                     content__icontains=query,
                 )
                 .select_related("thread__board__category", "author")
-                .order_by("-created_at")[:50]
+                .order_by("-created_at")
             )
+            if board_filter:
+                qs = qs.filter(thread__board_id=board_filter)
+            if author_filter:
+                qs = qs.filter(author__username__icontains=author_filter)
+            if date_from:
+                qs = qs.filter(created_at__date__gte=date_from)
+            if date_to:
+                qs = qs.filter(created_at__date__lte=date_to)
+            results = qs[:50]
 
     context = {
         "query": query,
         "results": results,
         "too_short": too_short,
         "min_length": AUTH_FORUM_SEARCH_MIN_LENGTH,
+        "all_boards": accessible_boards,
+        "board_filter": board_filter,
+        "author_filter": author_filter,
+        "date_from": date_from,
+        "date_to": date_to,
     }
     return render(request, "auth_forum/search.html", context)
 
@@ -702,3 +741,257 @@ def vote_poll(request, poll_pk):
 
     messages.success(request, _("Vote recorded."))
     return redirect("auth_forum:thread", thread_pk=poll.thread.pk)
+
+
+# ---------------------------------------------------------------------------
+# Mark all threads as read
+# ---------------------------------------------------------------------------
+
+
+@login_required
+@permission_required("auth_forum.basic_access")
+@require_POST
+def mark_all_read(request):
+    """Mark all accessible threads as read."""
+    accessible_boards = get_accessible_boards(request.user)
+    board_ids = [b.id for b in accessible_boards]
+    thread_ids = list(Thread.objects.filter(board_id__in=board_ids).values_list("id", flat=True))
+    with transaction.atomic():
+        for tid in thread_ids:
+            from .helpers import mark_thread_read as _mark_read
+            from .models import UserReadStatus
+            UserReadStatus.objects.update_or_create(
+                user=request.user, thread_id=tid, defaults={}
+            )
+    messages.success(request, _("All threads marked as read."))
+    return redirect("auth_forum:index")
+
+
+@login_required
+@permission_required("auth_forum.basic_access")
+@require_POST
+def mark_board_read(request, board_slug):
+    """Mark all threads in a board as read."""
+    from .models import UserReadStatus
+    the_board = get_object_or_404(Board, slug=board_slug)
+    if not user_can_access_board(request.user, the_board):
+        return redirect("auth_forum:index")
+    thread_ids = list(the_board.threads.values_list("id", flat=True))
+    with transaction.atomic():
+        for tid in thread_ids:
+            UserReadStatus.objects.update_or_create(
+                user=request.user, thread_id=tid, defaults={}
+            )
+    messages.success(request, _("Board marked as read."))
+    return redirect("auth_forum:board", board_slug=board_slug)
+
+
+# ---------------------------------------------------------------------------
+# Jump to first unread post in thread
+# ---------------------------------------------------------------------------
+
+
+@login_required
+@permission_required("auth_forum.basic_access")
+def thread_first_unread(request, thread_pk):
+    """Redirect to the page and anchor of the first unread post."""
+    from .models import UserReadStatus
+    the_thread = get_object_or_404(Thread.objects.select_related("board"), pk=thread_pk)
+    if not user_can_access_board(request.user, the_thread.board):
+        return redirect("auth_forum:index")
+
+    read_status = UserReadStatus.objects.filter(user=request.user, thread=the_thread).first()
+    if read_status:
+        first_unread = (
+            the_thread.posts.filter(created_at__gt=read_status.last_read)
+            .order_by("created_at")
+            .first()
+        )
+    else:
+        first_unread = the_thread.posts.order_by("created_at").first()
+
+    if not first_unread:
+        return redirect("auth_forum:thread", thread_pk=thread_pk)
+
+    posts_before = the_thread.posts.filter(created_at__lt=first_unread.created_at).count()
+    page = (posts_before // AUTH_FORUM_POSTS_PER_PAGE) + 1
+    url = reverse("auth_forum:thread", kwargs={"thread_pk": thread_pk})
+    if page > 1:
+        url += f"?page={page}"
+    url += f"#post-{first_unread.pk}"
+    return redirect(url)
+
+
+# ---------------------------------------------------------------------------
+# Board subscription
+# ---------------------------------------------------------------------------
+
+
+@login_required
+@permission_required("auth_forum.basic_access")
+@require_POST
+def toggle_board_subscription(request, board_slug):
+    """Subscribe to or unsubscribe from a board."""
+    the_board = get_object_or_404(Board, slug=board_slug)
+    if not user_can_access_board(request.user, the_board):
+        return redirect("auth_forum:index")
+    sub, created = BoardSubscription.objects.get_or_create(user=request.user, board=the_board)
+    if not created:
+        sub.delete()
+        messages.info(request, _("Unsubscribed from board."))
+    else:
+        messages.success(request, _("Subscribed — you'll be notified of new threads."))
+    return redirect("auth_forum:board", board_slug=board_slug)
+
+
+# ---------------------------------------------------------------------------
+# Move thread (manage_forum only)
+# ---------------------------------------------------------------------------
+
+
+@login_required
+@permission_required("auth_forum.manage_forum")
+def move_thread(request, thread_pk):
+    """Move a thread to a different board."""
+    the_thread = get_object_or_404(Thread.objects.select_related("board"), pk=thread_pk)
+    if request.method == "POST":
+        new_board_id = request.POST.get("target_board")
+        new_board = get_object_or_404(Board, pk=new_board_id)
+        the_thread.board = new_board
+        the_thread.save(update_fields=["board"])
+        messages.success(request, _(f"Thread moved to {new_board.name}."))
+        return redirect("auth_forum:thread", thread_pk=the_thread.pk)
+    all_boards = Board.objects.select_related("category").order_by("category__order", "order", "name")
+    # Group boards by category name for display
+    boards_by_category: dict = {}
+    for b in all_boards:
+        cat_name = b.category.name if b.category else "—"
+        boards_by_category.setdefault(cat_name, []).append(b)
+    return render(request, "auth_forum/move_thread.html", {
+        "thread": the_thread,
+        "boards_by_category": boards_by_category,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Post edit history
+# ---------------------------------------------------------------------------
+
+
+@login_required
+@permission_required("auth_forum.basic_access")
+def post_history(request, post_pk):
+    """View the edit history for a post."""
+    post = get_object_or_404(Post.objects.select_related("thread__board", "author"), pk=post_pk)
+    if not user_can_access_board(request.user, post.thread.board):
+        return redirect("auth_forum:index")
+    edits = post.edits.select_related("editor").order_by("-edited_at")
+    return render(request, "auth_forum/post_history.html", {"post": post, "edits": edits})
+
+
+# ---------------------------------------------------------------------------
+# Live preview (API)
+# ---------------------------------------------------------------------------
+
+
+@login_required
+@permission_required("auth_forum.basic_access")
+def preview_content(request):
+    """Return rendered HTML for a content string (used by the editor preview toggle)."""
+    if request.method != "POST":
+        return HttpResponse("", status=405)
+    from .templatetags.forum_tags import forum_render
+    content = request.POST.get("content", "")
+    return JsonResponse({"html": forum_render(content)})
+
+
+# ---------------------------------------------------------------------------
+# @mention autocomplete (API)
+# ---------------------------------------------------------------------------
+
+
+@login_required
+@permission_required("auth_forum.basic_access")
+def mention_autocomplete(request):
+    """JSON: usernames matching ?q=... (min 2 chars)."""
+    q = request.GET.get("q", "").strip()
+    if len(q) < 2:
+        return JsonResponse({"users": []})
+    users = list(
+        User.objects.filter(username__istartswith=q)
+        .order_by("username")[:8]
+        .values_list("username", flat=True)
+    )
+    return JsonResponse({"users": users})
+
+
+# ---------------------------------------------------------------------------
+# Image upload (paste / drag-and-drop)
+# ---------------------------------------------------------------------------
+
+
+@login_required
+@permission_required("auth_forum.basic_access")
+def upload_image(request):
+    """Accept a pasted or dragged image file, save it, and return the public URL."""
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=405)
+    if not AUTH_FORUM_UPLOAD_ENABLED:
+        return JsonResponse({"error": "Image upload is not enabled on this server."}, status=403)
+
+    img = request.FILES.get("image")
+    if not img:
+        return JsonResponse({"error": "No file received."}, status=400)
+    if img.size > AUTH_FORUM_UPLOAD_MAX_SIZE:
+        return JsonResponse({"error": "File too large."}, status=400)
+    allowed_types = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+    if img.content_type not in allowed_types:
+        return JsonResponse({"error": "Unsupported file type."}, status=400)
+
+    from django.conf import settings
+    ext = img.name.rsplit(".", 1)[-1].lower() if "." in img.name else "png"
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    upload_dir = os.path.join(settings.MEDIA_ROOT, "auth_forum", "uploads")
+    os.makedirs(upload_dir, exist_ok=True)
+    with open(os.path.join(upload_dir, filename), "wb") as fh:
+        for chunk in img.chunks():
+            fh.write(chunk)
+    url = settings.MEDIA_URL.rstrip("/") + f"/auth_forum/uploads/{filename}"
+    return JsonResponse({"url": url})
+
+
+# ---------------------------------------------------------------------------
+# Forum statistics
+# ---------------------------------------------------------------------------
+
+
+@login_required
+@permission_required("auth_forum.basic_access")
+def stats(request):
+    """Forum-wide statistics page."""
+    top_posters = (
+        Post.objects.filter(author__isnull=False)
+        .values("author__username")
+        .annotate(post_count=Count("id"))
+        .order_by("-post_count")[:10]
+    )
+    top_threads = Thread.objects.select_related("board").order_by("-view_count")[:10]
+    most_active = (
+        Thread.objects.select_related("board")
+        .annotate(reply_count=Count("posts"))
+        .order_by("-reply_count")[:10]
+    )
+    total_posts = Post.objects.count()
+    total_threads = Thread.objects.count()
+    total_users = (
+        User.objects.filter(forum_posts__isnull=False).distinct().count()
+    )
+    context = {
+        "top_posters": top_posters,
+        "top_threads": top_threads,
+        "most_active": most_active,
+        "total_posts": total_posts,
+        "total_threads": total_threads,
+        "total_users": total_users,
+    }
+    return render(request, "auth_forum/stats.html", context)

@@ -26,6 +26,15 @@
         <a href="{% url 'auth_forum:search' %}" class="btn btn-outline-secondary btn-sm">
             <i class="fas fa-search fa-fw"></i> {% translate "Search" %}
         </a>
+        <a href="{% url 'auth_forum:stats' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-chart-bar fa-fw"></i> {% translate "Stats" %}
+        </a>
+        <form method="post" action="{% url 'auth_forum:mark_all_read' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-check-double fa-fw"></i> {% translate "Mark All Read" %}
+            </button>
+        </form>
     </div>
 </div>
 

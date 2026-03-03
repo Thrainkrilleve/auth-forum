@@ -25,10 +25,24 @@
         <p class="text-muted mb-0" style="font-size:0.9rem;">{{ board.description }}</p>
         {% endif %}
     </div>
-    <a href="{% url 'auth_forum:new_thread' board.slug %}"
-       class="btn btn-primary">
-        <i class="fas fa-plus fa-fw"></i> {% translate "New Thread" %}
-    </a>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'auth_forum:new_thread' board.slug %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus fa-fw"></i> {% translate "New Thread" %}
+        </a>
+        <form method="post" action="{% url 'auth_forum:toggle_board_subscription' board.slug %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm {% if user_board_subscribed %}btn-success{% else %}btn-outline-secondary{% endif %}">
+                <i class="fas {% if user_board_subscribed %}fa-bell{% else %}fa-bell-slash{% endif %} fa-fw"></i>
+                {% if user_board_subscribed %}{% translate "Subscribed" %}{% else %}{% translate "Subscribe" %}{% endif %}
+            </button>
+        </form>
+        <form method="post" action="{% url 'auth_forum:mark_board_read' board.slug %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-check-double fa-fw"></i> {% translate "Mark Read" %}
+            </button>
+        </form>
+    </div>
 </div>
 
 {# ---- Thread table ---- #}
@@ -53,8 +67,9 @@
                     <td>
                         <div class="forum-thread-title-cell">
                             {% if t.id in unread_ids %}
-                            <span class="forum-unread-dot"
-                                  title="{% translate 'Unread posts' %}"></span>
+                            <a href="{% url 'auth_forum:thread_first_unread' t.pk %}"
+                               class="forum-unread-dot"
+                               title="{% translate 'Jump to first unread post' %}"></a>
                             {% endif %}
 
                             {% if t.is_pinned %}
@@ -71,6 +86,9 @@
                             </span>
                             {% endif %}
 
+                            {% if t.prefix %}
+                            <span class="forum-prefix forum-prefix-{{ t.prefix }}">{{ t.get_prefix_display }}</span>
+                            {% endif %}
                             <a href="{% url 'auth_forum:thread' t.pk %}">{{ t.title }}</a>
                         </div>
                         <small class="text-muted ms-3">

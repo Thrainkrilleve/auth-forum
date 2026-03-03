@@ -1,0 +1,70 @@
+{% extends 'auth_forum/base.html' %}
+{% load i18n static forum_tags %}
+
+{% block forum_page_title %}{% translate "Edit History" %}{% endblock %}
+
+{% block forum_content %}
+
+<nav class="forum-breadcrumb">
+    <a href="{% url 'auth_forum:index' %}"><i class="fas fa-home fa-fw"></i> {% translate "Forum" %}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'auth_forum:board' post.thread.board.slug %}">{{ post.thread.board.name }}</a>
+    <span class="separator">/</span>
+    <a href="{% url 'auth_forum:thread' post.thread.pk %}">{{ post.thread.title|truncatechars:50 }}</a>
+    <span class="separator">/</span>
+    <strong>{% translate "Post Edit History" %}</strong>
+</nav>
+
+<div class="forum-page-header">
+    <h1 class="forum-page-title" style="font-size:1.1rem;">
+        <i class="fas fa-history fa-fw"></i>
+        {% translate "Edit History" %} — {% translate "post by" %}
+        {% if post.author %}{{ post.author.username }}{% else %}{% translate "deleted" %}{% endif %}
+    </h1>
+    <a href="{% url 'auth_forum:thread' post.thread.pk %}#post-{{ post.pk }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left fa-fw"></i> {% translate "Back to thread" %}
+    </a>
+</div>
+
+{# Current version #}
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-check-circle fa-fw text-success"></i> {% translate "Current version" %}</span>
+        <small class="text-muted">{{ post.updated_at }}</small>
+    </div>
+    <div class="card-body">
+        <div class="forum-post-content">{{ post.content|forum_render }}</div>
+    </div>
+</div>
+
+{# Edit history #}
+{% if edits %}
+<h5 class="text-muted mb-3" style="font-size:0.9rem;">
+    <i class="fas fa-history fa-fw"></i>
+    {% blocktranslate count n=edits|length %}{{ n }} previous version{% plural %}{{ n }} previous versions{% endblocktranslate %}
+</h5>
+
+{% for edit in edits %}
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center" style="font-size:0.82rem;">
+        <span>
+            <i class="fas fa-pen fa-fw text-muted"></i>
+            {% translate "Edited by" %}
+            <strong>{% if edit.editor %}{{ edit.editor.username }}{% else %}{% translate "unknown" %}{% endif %}</strong>
+        </span>
+        <small class="text-muted">{{ edit.edited_at }}</small>
+    </div>
+    <div class="card-body">
+        <div class="forum-post-content" style="opacity:0.75;">{{ edit.old_content|forum_render }}</div>
+    </div>
+</div>
+{% endfor %}
+
+{% else %}
+<div class="text-center text-muted py-5">
+    <i class="fas fa-history fa-2x mb-2 d-block"></i>
+    {% translate "No edit history for this post." %}
+</div>
+{% endif %}
+
+{% endblock %}

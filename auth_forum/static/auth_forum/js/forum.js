@@ -290,6 +290,300 @@
     }
 
     /* ===================================================================
+       10. Live Preview — POST to /api/preview/ and show rendered HTML
+       =================================================================== */
+
+    function initPreview() {
+        document.addEventListener("click", function (e) {
+            var btn = e.target.closest(".btn-editor-preview");
+            if (!btn) return;
+            var wrap = btn.closest(".forum-editor-wrap");
+            if (!wrap) return;
+            var ta = wrap.querySelector(".forum-reply-textarea");
+            var previewDiv = wrap.querySelector(".forum-editor-preview");
+            if (!ta || !previewDiv) return;
+
+            // Toggle off
+            if (!previewDiv.classList.contains("d-none")) {
+                previewDiv.classList.add("d-none");
+                previewDiv.innerHTML = "";
+                btn.classList.remove("btn-editor-preview--active");
+                return;
+            }
+
+            // Show loading state
+            previewDiv.classList.remove("d-none");
+            previewDiv.innerHTML = '<span class="text-muted" style="font-size:0.85rem;"><i class="fas fa-spinner fa-spin fa-fw"></i> Rendering…</span>';
+            btn.classList.add("btn-editor-preview--active");
+
+            var csrfToken = document.querySelector("[name=csrfmiddlewaretoken]");
+            var csrf = csrfToken ? csrfToken.value : "";
+
+            var previewUrl = window.FORUM_PREVIEW_URL;
+            if (!previewUrl) {
+                // Derive from current path prefix
+                var m = window.location.pathname.match(/^(\/[^/]+\/forum)/);
+                previewUrl = (m ? m[1] : "") + "/api/preview/";
+            }
+
+            fetch(previewUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": csrf
+                },
+                body: "content=" + encodeURIComponent(ta.value)
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                previewDiv.innerHTML = '<div class="forum-post-content forum-preview-content">' + (data.html || "") + "</div>";
+            })
+            .catch(function () {
+                previewDiv.innerHTML = '<span class="text-danger" style="font-size:0.85rem;"><i class="fas fa-exclamation-triangle fa-fw"></i> Preview unavailable.</span>';
+            });
+        });
+    }
+
+    /* ===================================================================
+       11. @mention autocomplete dropdown
+       =================================================================== */
+
+    function initMentionAutocomplete() {
+        var dropdown = null;
+        var activeTa = null;
+        var debounceTimer = null;
+
+        var autocompleteUrl = window.FORUM_MENTION_URL;
+        if (!autocompleteUrl) {
+            var m = window.location.pathname.match(/^(\/[^/]+\/forum)/);
+            autocompleteUrl = (m ? m[1] : "") + "/api/mention-autocomplete/";
+        }
+
+        function buildDropdown() {
+            if (dropdown) return dropdown;
+            dropdown = document.createElement("ul");
+            dropdown.className = "forum-mention-dropdown";
+            document.body.appendChild(dropdown);
+            return dropdown;
+        }
+
+        function hideDropdown() {
+            if (dropdown) dropdown.style.display = "none";
+        }
+
+        function showDropdown(ta, results, prefix) {
+            var dd = buildDropdown();
+            dd.innerHTML = "";
+            if (!results.length) { hideDropdown(); return; }
+
+            var rect = ta.getBoundingClientRect();
+            // Approximate caret position
+            dd.style.left = (rect.left + window.scrollX) + "px";
+            dd.style.top = (rect.bottom + window.scrollY + 2) + "px";
+            dd.style.display = "block";
+
+            results.forEach(function (u) {
+                var li = document.createElement("li");
+                li.className = "forum-mention-item";
+                li.textContent = u;
+                li.addEventListener("mousedown", function (e) {
+                    e.preventDefault();
+                    // Replace the @prefix the user typed with @username + space
+                    var val = ta.value;
+                    var cursor = ta.selectionStart;
+                    var before = val.substring(0, cursor);
+                    var atPos = before.lastIndexOf("@");
+                    if (atPos >= 0) {
+                        ta.value = val.substring(0, atPos) + "@" + u + " " + val.substring(cursor);
+                        ta.selectionStart = ta.selectionEnd = atPos + u.length + 2;
+                    }
+                    ta.focus();
+                    hideDropdown();
+                });
+                dd.appendChild(li);
+            });
+        }
+
+        document.addEventListener("input", function (e) {
+            var ta = e.target;
+            if (!ta.classList.contains("forum-reply-textarea")) return;
+            activeTa = ta;
+
+            var cursor = ta.selectionStart;
+            var before = ta.value.substring(0, cursor);
+            var match = before.match(/@(\w{1,30})$/);
+            if (!match) { hideDropdown(); return; }
+
+            var query = match[1];
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function () {
+                fetch(autocompleteUrl + "?q=" + encodeURIComponent(query))
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (activeTa === ta) showDropdown(ta, data.results || [], query);
+                    })
+                    .catch(function () { hideDropdown(); });
+            }, 220);
+        });
+
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") hideDropdown();
+        });
+
+        document.addEventListener("click", function (e) {
+            if (dropdown && e.target !== activeTa) hideDropdown();
+        });
+    }
+
+    /* ===================================================================
+       12. Inline emoji picker
+       =================================================================== */
+
+    var EMOJI_LIST = [
+        "😀","😄","😂","🤣","😊","😍","🥰","😎","🤔","😅",
+        "😭","🥺","😤","😡","🤯","🥳","😴","🤧","😷","🤑",
+        "👍","👎","👋","🤝","🙏","💪","🎉","🔥","💯","⭐",
+        "❤️","💀","🚀","🎮","🏆","⚔️","🛡️","🌍","🌙","☀️"
+    ];
+
+    function initEmojiPicker() {
+        var picker = null;
+        var activeTa = null;
+
+        function buildPicker() {
+            if (picker) return picker;
+            picker = document.createElement("div");
+            picker.className = "forum-emoji-picker";
+            EMOJI_LIST.forEach(function (em) {
+                var btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "forum-emoji-btn";
+                btn.textContent = em;
+                btn.addEventListener("click", function () {
+                    if (!activeTa) return;
+                    var start = activeTa.selectionStart;
+                    var end = activeTa.selectionEnd;
+                    activeTa.value = activeTa.value.substring(0, start) + em + activeTa.value.substring(end);
+                    var newPos = start + em.length;
+                    activeTa.focus();
+                    activeTa.setSelectionRange(newPos, newPos);
+                    activeTa.dispatchEvent(new Event("input"));
+                    hidePicker();
+                });
+                picker.appendChild(btn);
+            });
+            document.body.appendChild(picker);
+            return picker;
+        }
+
+        function hidePicker() {
+            if (picker) picker.style.display = "none";
+        }
+
+        document.addEventListener("click", function (e) {
+            var btn = e.target.closest(".btn-editor-emoji");
+            if (!btn) {
+                if (picker && !picker.contains(e.target)) hidePicker();
+                return;
+            }
+            e.stopPropagation();
+            var wrap = btn.closest(".forum-editor-wrap");
+            activeTa = wrap
+                ? wrap.querySelector(".forum-reply-textarea")
+                : document.querySelector(".forum-reply-textarea");
+
+            var p = buildPicker();
+            var rect = btn.getBoundingClientRect();
+            p.style.left = (rect.left + window.scrollX) + "px";
+            p.style.top = (rect.bottom + window.scrollY + 4) + "px";
+            p.style.display = p.style.display === "grid" ? "none" : "grid";
+        });
+    }
+
+    /* ===================================================================
+       13. Paste / Drag-and-drop image upload
+       =================================================================== */
+
+    function initImageUpload() {
+        var uploadEnabled = window.FORUM_UPLOAD_ENABLED;
+        if (!uploadEnabled) return;
+
+        var uploadUrl = window.FORUM_UPLOAD_URL;
+        if (!uploadUrl) {
+            var m = window.location.pathname.match(/^(\/[^/]+\/forum)/);
+            uploadUrl = (m ? m[1] : "") + "/api/upload-image/";
+        }
+
+        function uploadFile(ta, file) {
+            if (!file || !file.type.startsWith("image/")) return;
+            var csrfToken = document.querySelector("[name=csrfmiddlewaretoken]");
+            var csrf = csrfToken ? csrfToken.value : "";
+
+            var fd = new FormData();
+            fd.append("image", file);
+
+            // Insert placeholder
+            var placeholder = "[Uploading " + file.name + "…]";
+            var pos = ta.selectionStart !== undefined ? ta.selectionStart : ta.value.length;
+            ta.value = ta.value.substring(0, pos) + placeholder + ta.value.substring(pos);
+            ta.dispatchEvent(new Event("input"));
+
+            fetch(uploadUrl, {
+                method: "POST",
+                headers: { "X-CSRFToken": csrf },
+                body: fd
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.url) {
+                    ta.value = ta.value.replace(placeholder, "\n" + data.url + "\n");
+                } else {
+                    ta.value = ta.value.replace(placeholder, "");
+                    alert("Upload failed: " + (data.error || "unknown error"));
+                }
+                ta.dispatchEvent(new Event("input"));
+            })
+            .catch(function () {
+                ta.value = ta.value.replace(placeholder, "");
+                ta.dispatchEvent(new Event("input"));
+                alert("Upload failed. Please try again.");
+            });
+        }
+
+        document.querySelectorAll(".forum-reply-textarea").forEach(function (ta) {
+            ta.addEventListener("paste", function (e) {
+                var items = e.clipboardData && e.clipboardData.items;
+                if (!items) return;
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].type.startsWith("image/")) {
+                        e.preventDefault();
+                        uploadFile(ta, items[i].getAsFile());
+                        break;
+                    }
+                }
+            });
+
+            ta.addEventListener("dragover", function (e) {
+                e.preventDefault();
+                ta.classList.add("forum-drag-over");
+            });
+
+            ta.addEventListener("dragleave", function () {
+                ta.classList.remove("forum-drag-over");
+            });
+
+            ta.addEventListener("drop", function (e) {
+                e.preventDefault();
+                ta.classList.remove("forum-drag-over");
+                var files = e.dataTransfer && e.dataTransfer.files;
+                if (files && files.length > 0) {
+                    uploadFile(ta, files[0]);
+                }
+            });
+        });
+    }
+
+    /* ===================================================================
        DOM Ready
        =================================================================== */
 
@@ -301,6 +595,10 @@
         initTooltips();
         initDeleteConfirm();
         initGiphyPicker();
+        initPreview();
+        initMentionAutocomplete();
+        initEmojiPicker();
+        initImageUpload();
     });
 
 })();

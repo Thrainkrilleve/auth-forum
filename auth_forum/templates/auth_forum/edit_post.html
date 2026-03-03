@@ -67,7 +67,21 @@
                                 title="{% translate 'Insert GIF from GIPHY' %}">
                             <i class="fas fa-film fa-fw"></i> GIF
                         </button>
+                        <button type="button" class="btn-editor btn-editor-emoji"
+                                title="{% translate 'Emoji' %}">
+                            <i class="fas fa-smile fa-fw"></i>
+                        </button>
+                        <button type="button" class="btn-editor"
+                                data-wrap-before="[spoiler]" data-wrap-after="[/spoiler]"
+                                title="{% translate 'Spoiler' %}">
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
+                        <button type="button" class="btn-editor btn-editor-preview"
+                                title="{% translate 'Preview' %}">
+                            <i class="fas fa-eye fa-fw"></i> {% translate "Preview" %}
+                        </button>
                     </div>
+                    <div class="forum-editor-preview d-none"></div>
                     <textarea name="content"
                               class="forum-reply-textarea with-toolbar"
                               data-max-length="10000"

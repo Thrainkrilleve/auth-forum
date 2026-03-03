@@ -813,3 +813,56 @@ mark {
     opacity: 0.75;
     white-space: nowrap;
 }
+
+/* ==========================================================================
+   Spoiler tag
+   ========================================================================== */
+
+.forum-spoiler {
+    display: inline;
+    background-color: var(--forum-border, #444);
+    color: transparent;
+    border-radius: 3px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s, color 0.2s;
+    padding: 0 3px;
+}
+
+.forum-spoiler:hover {
+    background-color: color-mix(in srgb, var(--forum-border, #444) 70%, var(--forum-surface, #222));
+}
+
+.forum-spoiler--revealed {
+    background-color: transparent;
+    color: inherit;
+    cursor: default;
+}
+
+.forum-spoiler-text {
+    pointer-events: none;
+}
+
+/* ==========================================================================
+   Thread Prefix / Flair badges
+   ========================================================================== */
+
+.forum-prefix {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    vertical-align: middle;
+    margin-right: 5px;
+    opacity: 0.92;
+}
+
+.forum-prefix-question  { background-color: var(--bs-info,    #0dcaf0); color: #000; }
+.forum-prefix-guide     { background-color: var(--bs-success, #198754); color: #fff; }
+.forum-prefix-answered  { background-color: var(--bs-success, #198754); color: #fff; }
+.forum-prefix-announcement { background-color: var(--bs-warning, #ffc107); color: #000; }
+.forum-prefix-discussion { background-color: var(--bs-secondary, #6c757d); color: #fff; }
+

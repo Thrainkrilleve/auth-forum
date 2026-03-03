@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-04
+
+### Added
+- **Thread Prefixes / Flair** — optional label (`Question`, `Guide`, `Answered`, `Announcement`, `Discussion`) on threads; displayed as colour-coded badge in board listing and thread header; prefix selector on New Thread form
+- **Spoiler tag** — `[spoiler]...[/spoiler]` renders hidden text that is revealed on click; spoiler toolbar button in all three editors
+- **Live Preview pane** — Preview button in all three editors (reply, new thread, edit post) POSTs to `/api/preview/` and renders the formatted result inline; toggle on/off
+- **@mention autocomplete** — typing `@` in any editor shows a floating dropdown of matching usernames (fetched from `/api/mention-autocomplete/`); clicking inserts the mention
+- **@mention notifications** — posting or replying fires an AA bell notification to every `@mentioned` user (controlled by `AUTH_FORUM_NOTIFY_MENTIONS` setting)
+- **Inline emoji picker** — 😀 button opens a 8-column flyout grid of 40 common emoji; click inserts at cursor position
+- **Paste / drag-and-drop image upload** — pasting or dragging an image file into any editor uploads it to `/api/upload-image/` and inserts the URL inline (requires `AUTH_FORUM_UPLOAD_ENABLED = True`)
+- **Mark All Read** button on the forum index page
+- **Mark Board Read** button on each board page
+- **Jump to first unread** — unread dot in board listing is now a link that jumps directly to the first unread post
+- **Board subscriptions** — Subscribe / Unsubscribe button on board pages; new threads notify all board subscribers (controlled by `AUTH_FORUM_NOTIFY_BOARD_SUBSCRIBERS` setting)
+- **Move Thread** — moderation toolbar on thread pages adds a Move button; mods select a target board from a grouped dropdown
+- **Post Edit History** — edit history link appears on posts that have been edited; history page shows all previous versions with editor and timestamp
+- **Forum Stats page** — `/stats/` shows total posts/threads/users, top 10 posters, most viewed threads, most replied threads; linked from forum index
+- **Advanced search filters** — collapsible filter panel on Search page adds board dropdown, author text field, and date-range inputs
+- New `window.FORUM_PREVIEW_URL`, `window.FORUM_MENTION_URL`, `window.FORUM_UPLOAD_URL`, `window.FORUM_UPLOAD_ENABLED` JS config vars injected via `base.html`
+- New `forum_upload_enabled` template tag
+- New settings: `AUTH_FORUM_UPLOAD_ENABLED` (default `False`), `AUTH_FORUM_UPLOAD_MAX_SIZE` (5 MB), `AUTH_FORUM_NOTIFY_MENTIONS` (default `True`), `AUTH_FORUM_NOTIFY_BOARD_SUBSCRIBERS` (default `True`)
+- New models: `PostEdit`, `BoardSubscription`; new field `Thread.prefix`
+- Migration `0004_thread_prefix_postedit_boardsubscription`
+
+### Changed
+- Unread dot in board listing is now an `<a>` tag linking to first-unread post instead of a decorative `<span>`
+- All editor toolbars gain spoiler, emoji, and preview buttons
+- Board page header buttons now include Subscribe and Mark Read alongside New Thread
+
 ## [0.4.0] - 2026-03-03
 
 ### Added

@@ -32,7 +32,13 @@
 {% endblock %}
 
 {% block extra_javascript %}
-<script>window.FORUM_GIPHY_KEY = "{% giphy_api_key %}";</script>
+<script>
+window.FORUM_GIPHY_KEY      = "{% giphy_api_key %}";
+window.FORUM_PREVIEW_URL    = "{% url 'auth_forum:preview_content' %}";
+window.FORUM_MENTION_URL    = "{% url 'auth_forum:mention_autocomplete' %}";
+window.FORUM_UPLOAD_URL     = "{% url 'auth_forum:upload_image' %}";
+window.FORUM_UPLOAD_ENABLED = {% forum_upload_enabled %};
+</script>
 <script src="{% static 'auth_forum/js/forum.js' %}"></script>
 {% block forum_extra_js %}{% endblock %}
 {% endblock %}

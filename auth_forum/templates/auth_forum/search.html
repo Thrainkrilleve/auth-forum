@@ -41,6 +41,65 @@
         </a>
         {% endif %}
     </div>
+
+    {# ---- Filter panel ---- #}
+    <div class="accordion mt-2 mb-1" id="searchFiltersAccordion">
+        <div class="accordion-item border-0 bg-transparent">
+            <h2 class="accordion-header" id="searchFiltersHeading">
+                <button class="accordion-button collapsed py-1 px-2 bg-transparent shadow-none text-muted"
+                        style="font-size:0.82rem; width: auto; display:inline-flex; gap:.4rem;"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#searchFiltersCollapse"
+                        aria-expanded="{% if board_filter or author_filter or date_from or date_to %}true{% else %}false{% endif %}"
+                        aria-controls="searchFiltersCollapse">
+                    <i class="fas fa-sliders-h fa-fw"></i>
+                    {% translate "Filters" %}
+                    {% if board_filter or author_filter or date_from or date_to %}
+                    <span class="badge bg-primary ms-1" style="font-size:0.68rem;">{% translate "active" %}</span>
+                    {% endif %}
+                </button>
+            </h2>
+            <div id="searchFiltersCollapse"
+                 class="accordion-collapse collapse {% if board_filter or author_filter or date_from or date_to %}show{% endif %}"
+                 aria-labelledby="searchFiltersHeading">
+                <div class="accordion-body p-2">
+                    <div class="row g-2">
+                        <div class="col-sm-4">
+                            <label class="form-label mb-1" style="font-size:0.8rem;">{% translate "Board" %}</label>
+                            <select name="board" class="form-select form-select-sm">
+                                <option value="">— {% translate "All boards" %} —</option>
+                                {% for b in all_boards %}
+                                <option value="{{ b.pk }}" {% if board_filter == b.pk|stringformat:"s" %}selected{% endif %}>{{ b.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-sm-3">
+                            <label class="form-label mb-1" style="font-size:0.8rem;">{% translate "Author" %}</label>
+                            <input type="text" name="author" class="form-control form-control-sm"
+                                   value="{{ author_filter|default:'' }}"
+                                   placeholder="{% translate 'Username' %}">
+                        </div>
+                        <div class="col-sm-2">
+                            <label class="form-label mb-1" style="font-size:0.8rem;">{% translate "From" %}</label>
+                            <input type="date" name="date_from" class="form-control form-control-sm"
+                                   value="{{ date_from|default:'' }}">
+                        </div>
+                        <div class="col-sm-2">
+                            <label class="form-label mb-1" style="font-size:0.8rem;">{% translate "To" %}</label>
+                            <input type="date" name="date_to" class="form-control form-control-sm"
+                                   value="{{ date_to|default:'' }}">
+                        </div>
+                        <div class="col-sm-1 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-filter fa-fw"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </form>
 
 {# Results #}

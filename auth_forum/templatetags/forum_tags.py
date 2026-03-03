@@ -101,6 +101,25 @@ def _extract_blocks(text: str) -> tuple:
         flags=re.IGNORECASE | re.DOTALL,
     )
 
+    # [spoiler]...[/spoiler]
+    def _sub_spoiler(m):
+        key = f"\x00BLOCK-{uuid.uuid4().hex}\x00"
+        body = m.group(1).strip()
+        mapping[key] = (
+            f'<span class="forum-spoiler" onclick="this.classList.toggle(\'forum-spoiler--revealed\')" '
+            f'title="Click to reveal">'
+            f'<span class="forum-spoiler-text">{body}</span>'
+            f'</span>'
+        )
+        return f" {key} "
+
+    text = re.sub(
+        r"\[spoiler\](.*?)\[/spoiler\]",
+        _sub_spoiler,
+        text,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+
     # Bare image URLs — a line containing only an image URL, no [img] tags needed
     def _sub_bare_img(m):
         key = f"\x00BLOCK-{uuid.uuid4().hex}\x00"
@@ -184,6 +203,14 @@ else:
             r'<div class="forum-quote-block"><div class="forum-quote-body">\1</div></div>',
             text, flags=re.IGNORECASE | re.DOTALL,
         )
+        text = re.sub(
+            r"\[spoiler\](.*?)\[/spoiler\]",
+            lambda m: (
+                '<span class="forum-spoiler" onclick="this.classList.toggle(\'forum-spoiler--revealed\')" title="Click to reveal">'
+                '<span class="forum-spoiler-text">' + m.group(1) + '</span></span>'
+            ),
+            text, flags=re.IGNORECASE | re.DOTALL,
+        )
         text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text, flags=re.DOTALL)
         text = re.sub(r"(?<!\w)_(.+?)_(?!\w)", r"<em>\1</em>", text, flags=re.DOTALL)
         text = re.sub(r"`(.+?)`", r"<code>\1</code>", text, flags=re.DOTALL)
@@ -209,3 +236,10 @@ def giphy_api_key():
     """Output the configured Giphy API key for use in templates."""
     from auth_forum.app_settings import AUTH_FORUM_GIPHY_API_KEY
     return AUTH_FORUM_GIPHY_API_KEY
+
+
+@register.simple_tag
+def forum_upload_enabled():
+    """Return JS-compatible boolean string for the image upload feature flag."""
+    from auth_forum.app_settings import AUTH_FORUM_UPLOAD_ENABLED
+    return "true" if AUTH_FORUM_UPLOAD_ENABLED else "false"
